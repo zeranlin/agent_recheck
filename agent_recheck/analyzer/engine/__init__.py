@@ -9,6 +9,7 @@
 - 混合分析引擎
 - 本地化规则引擎
 - 评分标准解析器
+- 降级兜底引擎
 """
 
 from .rule_loader import RuleLoader
@@ -17,6 +18,7 @@ from .rule_manager import RuleManager
 from .hybrid_engine import HybridEngine, AnalysisResult
 from .local_rules import LocalRuleEngine, RegionDetector
 from .scoring_parser import ScoringParser, ScoringStandard, ScoringItem, ScoreType
+from .fallback_engine import FallbackEngine, FallbackMode, FallbackConfig, GracefulDegradation
 
 __all__ = [
     # 规则加载
@@ -37,4 +39,9 @@ __all__ = [
     'ScoringStandard',
     'ScoringItem',
     'ScoreType',
+    # 降级兜底
+    'FallbackEngine',
+    'FallbackMode',
+    'FallbackConfig',
+    'GracefulDegradation',
 ]
