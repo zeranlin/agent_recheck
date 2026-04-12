@@ -1,6 +1,6 @@
 # 政府采购招投标文件合规性审查智能体设计文档
 
-**版本**：v1.0
+**版本**：v1.1
 **日期**：2026-04-12
 **状态**：草稿
 
@@ -21,6 +21,7 @@
 - 精准定位风险点
 - 提供充分证据和法规依据
 - 支持规则自学习和迭代优化
+- 高可用、高可靠的审查能力
 
 ---
 
@@ -42,7 +43,10 @@ agent_recheck/
 │   ├── regulations/          # 法规原文
 │   └── sync/                # 同步工具
 ├── models/                   # 数据模型
-└── utils/                    # 工具函数
+├── utils/                    # 工具函数
+├── tracker/                  # 监控埋点
+├── evaluator/                # 准确性评估
+└── tests/                    # 测试套件
 ```
 
 ### 2.2 三层审查体系
@@ -74,7 +78,32 @@ agent_recheck/
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 2.3 文档内容分层
+### 2.3 混合分析引擎（容错设计）
+
+```python
+# analyzer/engine/hybrid_engine.py
+
+class HybridAnalysisEngine:
+    """混合分析引擎，支持降级"""
+    
+    async def analyze(self, document, context):
+        # 优先使用混合模式
+        try:
+            if await self.llm.is_available(timeout=5):
+                return await self.analyze_with_hybrid(document, context)
+            else:
+                # LLM 不可用，降级到纯规则模式
+                logger.warning("LLM unavailable, falling back to rules only")
+                return await self.analyze_with_rules_only(document, context)
+        except LLMTimeoutError:
+            logger.error("LLM timeout, falling back to rules only")
+            return await self.analyze_with_rules_only(document, context)
+        except Exception as e:
+            logger.error(f"Analysis failed: {e}")
+            raise
+```
+
+### 2.4 文档内容分层
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -234,8 +263,55 @@ LLM 审查结果
     ▼
 候选规则生成（正则/关键词）
     │
-    ├── 置信度 ≥ 0.8 → 自动注册
-    └── 置信度 < 0.8 → 人工审核
+    ├── 置信度 ≥ 0.8 → 进入审核队列
+    └── 置信度 < 0.8 → 人工创建
+            │
+            ▼
+    ┌──────────────────┐
+    │  规则审核工作流   │
+    │  - 业务专家审核   │
+    │  - 小范围验证     │
+    │  - 灰度发布       │
+    └──────────────────┘
+            │
+            ▼
+    ┌──────────────────┐
+    │  规则版本管理     │
+    │  - 版本记录       │
+    │  - 一键回滚       │
+    │  - 冲突检测       │
+    └──────────────────┘
+            │
+            ▼
+      规则库注册
+```
+
+### 4.4 规则质量把控
+
+```python
+# analyzer/engine/rule_manager.py
+
+class RuleManager:
+    """规则生命周期管理"""
+    
+    def register_rule(self, rule: Rule, approval: bool = False):
+        """
+        注册规则：
+        1. 验证规则格式
+        2. 冲突检测
+        3. 测试集验证
+        4. 人工审批（可选）
+        5. 灰度发布（可选）
+        """
+        
+    def deprecate_rule(self, rule_id: str, reason: str):
+        """废弃规则，保留历史记录"""
+        
+    def rollback_rule(self, rule_id: str, version: str):
+        """回滚到指定版本"""
+        
+    def check_conflicts(self, rule: Rule) -> List[Conflict]:
+        """检测规则冲突"""
 ```
 
 ---
@@ -260,8 +336,11 @@ LLM 审查结果
 ### 5.2 跨段落审查
 
 ```python
-# 跨段落一致性检查
+# analyzer/llm/consistency_checker.py
+
 class ConsistencyChecker:
+    """跨段落一致性检查"""
+    
     def check(self, document):
         checks = [
             self.check_procurement_type_consistency,  # 采购类型一致性
@@ -276,11 +355,334 @@ class ConsistencyChecker:
 文档 → 智能分段（按章节，~2000字/段）→ 并行 LLM 审查 → 结果聚合
 ```
 
+### 5.4 LLM 调用保护机制
+
+```python
+# analyzer/llm/client.py
+
+class LLMClient:
+    """LLM 调用封装，含容错保护"""
+    
+    def __init__(self, config: LLMConfig):
+        self.timeout = config.timeout or 30
+        self.max_retries = config.max_retries or 3
+        self.fallback_enabled = config.fallback_enabled
+    
+    async def analyze(self, text: str, context: dict) -> AnalysisResult:
+        try:
+            return await self._call_with_retry(text, context)
+        except TimeoutError:
+            logger.warning("LLM call timeout")
+            raise LLMTimeoutError("LLM 分析超时")
+        except LLMServiceError as e:
+            logger.error(f"LLM service error: {e}")
+            raise LLMUnavailableError("LLM 服务不可用")
+    
+    async def is_available(self, timeout: float = 5) -> bool:
+        """检查 LLM 服务是否可用"""
+        try:
+            await asyncio.wait_for(self.client.ping(), timeout=timeout)
+            return True
+        except:
+            return False
+```
+
+### 5.5 Token 消耗监控
+
+```python
+# tracker/token_tracker.py
+
+class TokenTracker:
+    """Token 消耗追踪"""
+    
+    def track(self, operation: str, tokens: int):
+        """
+        记录 Token 消耗
+        - operation: analyze / learn / consistency_check
+        - tokens: 消耗数量
+        """
+        
+    def get_consumption_report(self) -> ConsumptionReport:
+        """生成消耗报告"""
+        
+    def check_quota(self) -> bool:
+        """检查是否超配额"""
+```
+
 ---
 
-## 6. CLI 命令设计
+## 6. 准确性评估框架
 
-### 6.1 核心命令
+### 6.1 评估指标
+
+```python
+# evaluator/accuracy_evaluator.py
+
+class AccuracyEvaluator:
+    """审查准确性评估"""
+    
+    def evaluate(self, results: List[Issue], ground_truth: List[Issue]) -> Metrics:
+        """
+        计算准确性指标：
+        - Precision（准确率）：预测的问题中有多少是正确的
+        - Recall（召回率）：实际的问题中有多少被发现了
+        - F1 Score：准确率和召回率的调和平均
+        - False Positive Rate：误报率
+        """
+        return {
+            "precision": self.calculate_precision(results, ground_truth),
+            "recall": self.calculate_recall(results, ground_truth),
+            "f1_score": self.calculate_f1(results, ground_truth),
+            "false_positive_rate": self.calculate_fpr(results, ground_truth),
+            "per_rule_metrics": self.calculate_per_rule(results, ground_truth),
+        }
+```
+
+### 6.2 测试集管理
+
+```
+tests/
+├── fixtures/                  # 测试样本
+│   ├── annotated/             # 已标注样本（ground truth）
+│   │   ├── sample_001.pdf    # 标注：issues.json
+│   │   └── sample_002.docx
+│   └── synthetic/             # 合成的边界样本
+│
+├── test_parser.py             # 解析器测试
+├── test_rule_engine.py        # 规则引擎测试
+├── test_llm_client.py         # LLM 客户端测试
+├── test_accuracy.py           # 准确性测试
+└── test_integration.py        # 集成测试
+```
+
+### 6.3 准确率目标
+
+| 指标 | 目标值 | 说明 |
+|------|--------|------|
+| Precision（准确率） | ≥ 85% | 误报率 ≤ 15% |
+| Recall（召回率） | ≥ 90% | 漏报率 ≤ 10% |
+| F1 Score | ≥ 87% | 综合指标 |
+| 高风险场景召回率 | ≥ 95% | 高风险必须覆盖 |
+
+### 6.4 定期评估机制
+
+```python
+# evaluator/periodic_evaluator.py
+
+class PeriodicEvaluator:
+    """
+    定期评估机制：
+    1. 每次规则更新后评估
+    2. 每周增量样本评估
+    3. 每月全面评估
+    """
+    
+    def evaluate_after_rule_change(self, rule_id: str):
+        """规则变更后评估"""
+        
+    def schedule_weekly_evaluation(self):
+        """每周定时评估"""
+        
+    def generate_evaluation_report(self) -> Report:
+        """生成评估报告"""
+```
+
+---
+
+## 7. 监控与可观测性
+
+### 7.1 监控指标
+
+```python
+# tracker/metrics.py
+
+class MetricsTracker:
+    """关键指标埋点"""
+    
+    METRICS = {
+        # 解析指标
+        "parse.success": "解析成功次数",
+        "parse.failed": "解析失败次数",
+        "parse.duration": "解析耗时",
+        
+        # 规则引擎指标
+        "rule.hit": "规则命中次数",
+        "rule.miss": "规则未命中次数",
+        "rule.triggered": "各规则触发次数",
+        
+        # LLM 指标
+        "llm.call.success": "LLM 调用成功次数",
+        "llm.call.failed": "LLM 调用失败次数",
+        "llm.call.timeout": "LLM 调用超时次数",
+        "llm.call.duration": "LLM 调用耗时",
+        "llm.token.consumed": "Token 消耗量",
+        
+        # 分析指标
+        "analysis.issue.found": "发现的问题数量",
+        "analysis.issue.high": "高风险问题数量",
+        "analysis.duration": "分析总耗时",
+        
+        # 报告指标
+        "report.generated": "报告生成次数",
+        "report.format": "报告格式分布",
+    }
+```
+
+### 7.2 日志规范
+
+```python
+# utils/logging.py
+
+import structlog
+
+# 结构化日志
+log = structlog.get_logger()
+
+# 日志规范
+"""
+日志级别：
+- ERROR：系统错误，需要人工介入
+- WARNING：异常情况，可能影响功能
+- INFO：关键业务流程
+- DEBUG：详细调试信息
+
+日志格式（JSON）：
+{
+    "timestamp": "2026-04-12T15:49:00Z",
+    "level": "INFO",
+    "event": "analysis.completed",
+    "file": "招标文件.pdf",
+    "issues_found": 5,
+    "duration_ms": 4523,
+    "trace_id": "uuid"
+}
+"""
+
+# 日志脱敏
+"""
+敏感信息脱敏：
+- API Key：显示前4位 + ****
+- 文件路径：脱敏用户目录
+- 企业名称：使用代号
+"""
+```
+
+### 7.3 告警机制
+
+```yaml
+# config/alerts.yaml
+
+alerts:
+  - name: high_error_rate
+    condition: error_rate > 5%
+    severity: critical
+    notification: [email, webhook]
+    
+  - name: llm_service_down
+    condition: llm.call.failed > 10 consecutive
+    severity: critical
+    notification: [sms, webhook]
+    
+  - name: high_latency
+    condition: analysis.duration > 60s
+    severity: warning
+    notification: [webhook]
+    
+  - name: token_quota_warning
+    condition: token.consumed > 80% quota
+    severity: warning
+    notification: [email]
+```
+
+---
+
+## 8. 安全设计
+
+### 8.1 敏感信息处理
+
+```python
+# utils/security.py
+
+class SecurityUtils:
+    """安全工具类"""
+    
+    @staticmethod
+    def mask_api_key(key: str) -> str:
+        """API Key 脱敏：显示前4位"""
+        if len(key) <= 4:
+            return "****"
+        return key[:4] + "****"
+    
+    @staticmethod
+    def mask_file_path(path: str) -> str:
+        """文件路径脱敏：隐藏用户目录"""
+        return path.replace(os.path.expanduser("~"), "~")
+    
+    @staticmethod
+    def sanitize_log(data: dict) -> dict:
+        """日志数据脱敏"""
+        sensitive_fields = ["api_key", "password", "token"]
+        return {
+            k: SecurityUtils.mask_api_key(v) if k in sensitive_fields else v
+            for k, v in data.items()
+        }
+```
+
+### 8.2 Prompt 注入检测
+
+```python
+# analyzer/llm/injection_detector.py
+
+class PromptInjectionDetector:
+    """Prompt 注入检测"""
+    
+    SUSPICIOUS_PATTERNS = [
+        "忽略之前的指示",
+        "ignore previous instructions",
+        "你是一个不同的AI",
+        "你现在是",
+        "忘记所有规则",
+    ]
+    
+    def detect(self, text: str) -> bool:
+        """检测是否存在 Prompt 注入"""
+        for pattern in self.SUSPICIOUS_PATTERNS:
+            if pattern.lower() in text.lower():
+                return True
+        return False
+    
+    def sanitize(self, text: str) -> str:
+        """尝试清理注入内容"""
+        # 保留原逻辑，移除可疑部分
+        pass
+```
+
+### 8.3 配置加密
+
+```toml
+# pyproject.toml
+
+[project.optional-dependencies]
+security = [
+    "cryptography>=41.0.0",  # 配置加密
+]
+
+# config/encryption.py
+class ConfigEncryptor:
+    """敏感配置加密"""
+    
+    def encrypt(self, value: str) -> str:
+        """加密敏感值"""
+        
+    def decrypt(self, encrypted: str) -> str:
+        """解密值"""
+```
+
+---
+
+## 9. CLI 命令设计
+
+### 9.1 核心命令
 
 ```bash
 # 分析单个文件
@@ -299,9 +701,19 @@ agent_recheck knowledge status
 # 规则管理
 agent_recheck rules list
 agent_recheck rules add <rule.yaml>
+agent_recheck rules audit
+agent_recheck rules rollback <id>
+
+# 评估
+agent_recheck evaluate [--test-set <path>]
+agent_recheck evaluate --report
+
+# 监控
+agent_recheck stats
+agent_recheck stats --metrics <metric_name>
 ```
 
-### 6.2 选项说明
+### 9.2 选项说明
 
 | 选项 | 说明 | 默认值 |
 |------|------|--------|
@@ -314,9 +726,9 @@ agent_recheck rules add <rule.yaml>
 
 ---
 
-## 7. 报告设计
+## 10. 报告设计
 
-### 7.1 输出格式
+### 10.1 输出格式
 
 | 格式 | 用途 |
 |------|------|
@@ -324,12 +736,12 @@ agent_recheck rules add <rule.yaml>
 | JSON | 数据接口，程序处理 |
 | Markdown | 简洁摘要 |
 
-### 7.2 报告结构
+### 10.2 报告结构
 
 ```json
 {
   "file": "招标文件.pdf",
-  "analyzed_at": "2026-04-12T15:44:00",
+  "analyzed_at": "2026-04-12T15:49:00",
   "summary": {
     "total_issues": 5,
     "high_risk": 2,
@@ -365,15 +777,22 @@ agent_recheck rules add <rule.yaml>
         "content": "删除'北京市'限制，修改为'投标截止前3年内...'"
       }
     }
-  ]
+  ],
+  "metadata": {
+    "knowledge_base_version": "v1.0.20260401",
+    "rules_version": "v1.0",
+    "llm_model": "qwen3.5-27b",
+    "analysis_mode": "hybrid",
+    "analysis_duration_ms": 4523
+  }
 }
 ```
 
 ---
 
-## 8. 知识库设计
+## 11. 知识库设计
 
-### 8.1 目录结构
+### 11.1 目录结构
 
 ```
 knowledge/
@@ -383,11 +802,30 @@ knowledge/
 │   ├── 87号令.md
 │   ├── 需求管理办法.md
 │   └── regulation_validity.yaml  # 法规有效性状态
+├── versions/                 # 版本历史
+│   ├── v1.0.20260401/
+│   └── v1.1.20260410/
 └── sync/                    # 同步工具
     └── sync.py              # 从官网同步
 ```
 
-### 8.2 法规有效性状态
+### 11.2 知识库版本管理
+
+```yaml
+# knowledge/versions/v1.0.20260401/version.yaml
+
+version: v1.0.20260401
+created_at: "2026-04-01"
+regulations:
+  - name: 政府采购法
+    checksum: sha256:xxx
+  - name: 87号令
+    checksum: sha256:yyy
+    
+description: "初始版本"
+```
+
+### 11.3 法规有效性状态
 
 ```yaml
 regulations:
@@ -401,7 +839,7 @@ regulations:
     replaced_by: 政府采购需求管理办法
 ```
 
-### 8.3 同步来源
+### 11.4 同步来源
 
 | 来源 | 网址 |
 |------|------|
@@ -411,21 +849,24 @@ regulations:
 
 ---
 
-## 9. 技术选型
+## 12. 技术选型
 
-### 9.1 核心技术栈
+### 12.1 核心技术栈
 
 | 类别 | 技术选型 | 说明 |
 |------|----------|------|
 | 语言 | Python 3.10+ | 开发效率高，生态完善 |
 | 文档解析 | pdfplumber, PyMuPDF | PDF 解析 |
 | 文档解析 | python-docx | Word 解析 |
+| 备选解析 | Apache Tika | 通用文档解析 |
 | LLM | openai SDK | 兼容 qwen |
 | CLI | typer + rich | 命令行界面 |
 | 报告 | jinja2 | HTML 模板 |
 | 配置 | pyyaml | 规则配置 |
+| 日志 | structlog | 结构化日志 |
+| 安全 | cryptography | 配置加密 |
 
-### 9.2 依赖清单
+### 12.2 依赖清单
 
 ```toml
 [project]
@@ -441,41 +882,123 @@ dependencies = [
     "jinja2>=3.1.0",
     "tqdm>=4.65.0",
     "pydantic>=2.0.0",
+    "structlog>=23.0.0",
+    "httpx>=0.25.0",
+]
+
+[project.optional-dependencies]
+security = [
+    "cryptography>=41.0.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
 ]
 ```
 
 ---
 
-## 10. 实施计划
+## 13. 实施计划
 
 ### Phase 1: 核心能力 (4-6周)
-- 文档解析（PDF/DOCX）
-- 规则引擎 + 初始规则集（~30条）
-- LLM 接入
-- 基础报告输出
+
+| 任务 | 交付物 | 负责 |
+|------|--------|------|
+| 文档解析（PDF/DOCX） | parser 模块 | 后端开发 |
+| 规则引擎 + 初始规则集（~30条） | engine 模块 | 后端开发 |
+| LLM 接入 + 容错机制 | llm 模块 | 后端开发 |
+| 降级兜底机制 | hybrid_engine | 后端开发 |
+| 基础报告输出 | report 模块 | 后端开发 |
+| 单元测试（覆盖率 ≥ 80%） | tests/ | 测试 |
 
 ### Phase 2: 审查能力 (4周)
-- 55个场景规则覆盖
-- 跨段落一致性检查
-- 规则自学习
-- HTML 报告优化
 
-### Phase 3: 知识库 (2-3周)
-- 法规知识库构建
-- 离线同步机制
-- 规则质量评估
+| 任务 | 交付物 | 负责 |
+|------|--------|------|
+| 55个场景规则覆盖 | rules/ | 业务专家 |
+| 跨段落一致性检查 | consistency 模块 | 后端开发 |
+| 规则审核工作流 | rule_manager | 后端开发 |
+| 规则灰度发布 | rule_manager | 后端开发 |
+| HTML 报告优化 | report 模块 | 后端开发 |
+| 解析质量测试集 | tests/fixtures | 测试 |
 
-### Phase 4: 生产化 (2-3周)
-- 监控告警
-- 测试完善
-- 文档编写
-- 部署方案
+### Phase 3: 准确率保障 (2-3周)
+
+| 任务 | 交付物 | 负责 |
+|------|--------|------|
+| 准确性评估框架 | evaluator 模块 | 后端开发 |
+| 测试集标注（100份） | tests/fixtures/annotated | 业务专家 |
+| 定期评估机制 | periodic_evaluator | 后端开发 |
+| 规则质量指标 | evaluator | 后端开发 |
+
+### Phase 4: 知识库 (2-3周)
+
+| 任务 | 交付物 | 负责 |
+|------|--------|------|
+| 法规知识库构建 | knowledge/ | 业务专家 |
+| 离线同步机制 | sync 模块 | 后端开发 |
+| 知识库版本管理 | version_manager | 后端开发 |
+| 知识库分发工具 | sync/export | 后端开发 |
+
+### Phase 5: 生产化 (2-3周)
+
+| 任务 | 交付物 | 负责 |
+|------|--------|------|
+| 监控埋点 | tracker 模块 | 后端开发 |
+| 结构化日志 | utils/logging | 后端开发 |
+| 告警机制 | alerts | 运维 |
+| 安全设计（日志脱敏、配置加密） | utils/security | 后端开发 |
+| 集成测试 | tests/test_integration | 测试 |
+| 部署文档 | docs/deployment/ | 运维 |
+| 运维手册 | docs/operator/ | 运维 |
 
 ---
 
-## 11. 附录
+## 14. 团队分工建议
 
-### 11.1 引用法规
+| 角色 | 人数 | 主要职责 |
+|------|------|----------|
+| 后端开发 | 2人 | 核心引擎、LLM 封装、规则引擎 |
+| 业务专家 | 1人 | 规则编写、样本标注、场景验证 |
+| 测试 | 1人 | 测试集、自动化测试、准确率评估 |
+| 运维 | 0.5人 | 部署、监控、知识库同步 |
+
+---
+
+## 15. 文档目录
+
+```
+docs/
+├── architecture.md           # 架构设计文档
+├── api.md                    # API 文档（如有）
+├── developer.md              # 开发者指南
+│
+├── rules/                    # 规则编写指南
+│   ├── how_to_write_rules.md
+│   └── rule_template.yaml
+│
+├── deployment/               # 部署文档
+│   ├── offline_deploy.md     # 离线部署
+│   ├── docker_deploy.md      # Docker 部署
+│   └── kubernetes_deploy.md   # K8s 部署
+│
+├── operator/                 # 运维手册
+│   ├── troubleshooting.md    # 故障排查
+│   ├── knowledge_sync.md     # 知识库同步
+│   └── monitoring.md         # 监控配置
+│
+└── user/                     # 用户手册
+    ├── quick_start.md        # 快速入门
+    └── command_reference.md  # 命令参考
+```
+
+---
+
+## 16. 附录
+
+### 16.1 引用法规
 
 | 法规名称 | 文号 | 施行日期 |
 |----------|------|----------|
@@ -484,8 +1007,9 @@ dependencies = [
 | 政府采购货物和服务招标投标管理办法 | 财政部令第87号 | 2017-10-01 |
 | 政府采购需求管理办法 | 财库〔2021〕22号 | 2021-07-01 |
 
-### 11.2 变更记录
+### 16.2 变更记录
 
 | 版本 | 日期 | 变更说明 |
 |------|------|----------|
 | v1.0 | 2026-04-12 | 初稿 |
+| v1.1 | 2026-04-12 | CTO 审查补充：<br>- 混合分析引擎容错设计<br>- 准确性评估框架<br>- 规则质量把控流程<br>- 监控与可观测性<br>- 安全设计<br>- 团队分工建议<br>- 文档目录完善 |
