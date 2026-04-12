@@ -61,18 +61,14 @@ class ReportBuilder:
         
         # 构建元数据
         report_metadata = ReportMetadata(
-            generated_at=datetime.now(),
-            document_title=metadata.get("title") if metadata else None,
+            document_name=metadata.get("title") if metadata else None,
             document_path=metadata.get("path") if metadata else None,
-            analyzer_version=metadata.get("version", "1.0.0") if metadata else "1.0.0",
-            analysis_mode=metadata.get("mode", "unknown") if metadata else "unknown",
         )
         
         return Report(
             metadata=report_metadata,
             summary=summary,
             issues=issues[:self.config.max_issues],
-            grouped_issues=grouped_issues,
         )
     
     def _build_summary(self, issues: List[Issue]) -> ReportSummary:
@@ -83,7 +79,8 @@ class ReportBuilder:
         
         for issue in issues:
             # 按级别统计
-            level = issue.level.lower() if issue.level else "low"
+            level = issue.level.value if hasattr(issue.level, 'value') else issue.level
+            level = level.lower() if level else "low"
             if level in by_level:
                 by_level[level] += 1
             
@@ -105,7 +102,6 @@ class ReportBuilder:
             medium_risk=by_level["medium"],
             low_risk=by_level["low"],
             by_category=by_category,
-            overall=overall,
         )
     
     def _group_issues(

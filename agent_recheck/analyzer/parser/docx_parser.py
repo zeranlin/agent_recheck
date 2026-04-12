@@ -74,6 +74,9 @@ class DocxParser:
         except ImportError:
             raise ImportError("python-docx not installed. Run: pip install python-docx")
 
+        # 转换字符串路径为 Path 对象
+        file_path = Path(file_path)
+
         doc = DocxDocument(file_path)
 
         metadata = self._extract_metadata(file_path, doc)

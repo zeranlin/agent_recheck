@@ -18,6 +18,7 @@ import json
 from .parser.base import ParsedDocument
 from .engine.hybrid_engine import HybridAnalysisEngine as HybridEngine, AnalysisResult
 from .engine.fallback_engine import FallbackEngine
+from .consistency import ConsistencyChecker
 from ..report.report_builder import ReportBuilder, ReportConfig
 
 
@@ -128,7 +129,6 @@ class ReviewWorkflow:
             task.update_stage(ReviewStage.DOCUMENT_PARSING, "in_progress")
             document = self._parse_document(task.document_path)
             task.update_stage(ReviewStage.DOCUMENT_PARSING, "completed", {
-                "page_count": document.metadata.get("page_count", 0),
                 "table_count": len(document.tables),
                 "section_count": len(document.sections)
             })
@@ -138,7 +138,7 @@ class ReviewWorkflow:
             rule_result = self._run_rule_matching(document)
             task.update_stage(ReviewStage.RULE_MATCHING, "completed", {
                 "rule_count": len(rule_result.issues),
-                "high_risk_count": sum(1 for i in rule_result.issues if i.severity.value == "high")
+                "high_risk_count": sum(1 for i in rule_result.issues if i.level.value == "high")
             })
 
             # 阶段3: LLM分析 (如果启用)
@@ -149,6 +149,7 @@ class ReviewWorkflow:
                     "llm_issues": len(llm_result.issues) if llm_result else 0
                 })
             else:
+                llm_result = None
                 task.update_stage(ReviewStage.LLM_ANALYSIS, "skipped")
 
             # 阶段4: 一致性检查
@@ -163,6 +164,7 @@ class ReviewWorkflow:
                     ))
                 })
             else:
+                consistency_result = None
                 task.update_stage(ReviewStage.CONSISTENCY_CHECK, "skipped")
 
             # 阶段5: 结果合并
@@ -218,10 +220,10 @@ class ReviewWorkflow:
         from .engine.matcher import RuleMatcher
 
         rule_loader = RuleLoader()
-        rules = rule_loader.load_all_rules()
+        rules = rule_loader.load_all()
 
-        matcher = RuleMatcher(rules)
-        return matcher.match_document(document)
+        matcher = RuleMatcher()
+        return matcher.match_document(document, rules)
 
     def _run_llm_analysis(self, document: ParsedDocument) -> Optional[AnalysisResult]:
         """运行LLM分析"""
@@ -243,14 +245,26 @@ class ReviewWorkflow:
 
     def _combine_results(
         self,
-        rule_result: AnalysisResult,
-        llm_result: Optional[AnalysisResult]
-    ) -> AnalysisResult:
+        rule_result: Any,
+        llm_result: Optional[Any]
+    ) -> Any:
         """合并结果"""
         from .aggregator.merger import IssueAggregator
 
         aggregator = IssueAggregator()
-        combined = aggregator.combine_results([rule_result, llm_result])
+        issues_lists = [rule_result.issues] if rule_result else []
+        if llm_result:
+            issues_lists.append(llm_result.issues)
+        
+        combined_issues = aggregator.aggregate(issues_lists)
+        
+        # 创建合并结果
+        from ..models.issue import Issue
+        combined = type('CombinedResult', (), {
+            'issues': combined_issues,
+            'total_count': len(combined_issues),
+            'high_risk_count': sum(1 for i in combined_issues if i.level.value == "high")
+        })()
         return combined
 
     def _generate_reports(
@@ -262,28 +276,59 @@ class ReviewWorkflow:
         """生成报告"""
         reports = {}
 
-        config = ReportConfig(
-            title=f"招标文件合规性审查报告 - {task.document_name}",
-            include_summary=True,
-            include_details=True,
-            group_by="category"
-        )
+        metadata = {
+            "title": f"招标文件合规性审查报告 - {task.document_name}",
+            "path": task.document_path,
+            "version": "1.0.0",
+            "mode": "rule_based" if not self.config.enable_llm else "llm_hybrid"
+        }
+
+        report = self.report_builder.build(result.issues, metadata)
 
         for fmt in self.config.output_formats:
             if fmt == "json":
-                reports["json"] = self.report_builder.build_json(result, consistency, config)
+                reports["json"] = report.model_dump_json() if hasattr(report, 'model_dump_json') else str(report)
             elif fmt == "markdown":
-                reports["markdown"] = self.report_builder.build_markdown(result, consistency, config)
+                reports["markdown"] = self._to_markdown(report, result)
             elif fmt == "html":
-                reports["html"] = self.report_builder.build_html(result, consistency, config)
+                reports["html"] = f"<html><body><h1>{metadata['title']}</h1></body></html>"
 
         if self.config.output_path:
+            import os
+            os.makedirs(self.config.output_path, exist_ok=True)
             for fmt, content in reports.items():
                 output_file = f"{self.config.output_path}/{task.task_id}.{fmt}"
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(content)
 
         return reports
+
+    def _to_markdown(self, report: Any, result: Any) -> str:
+        """将报告转换为 Markdown 格式"""
+        title = report.metadata.document_name if report.metadata else '招标文件合规性审查报告'
+        lines = [
+            f"# {title}",
+            "",
+            "## 审查摘要",
+            f"- 总问题数: {report.summary.total_issues}",
+            f"- 高风险: {report.summary.high_risk}",
+            f"- 中风险: {report.summary.medium_risk}",
+            f"- 低风险: {report.summary.low_risk}",
+            "",
+            "## 问题详情",
+        ]
+        
+        for issue in report.issues[:50]:
+            level = issue.level.value if hasattr(issue.level, 'value') else issue.level
+            lines.append(f"### {issue.title}")
+            lines.append(f"**级别**: {level.upper()}")
+            lines.append(f"**类别**: {issue.category}")
+            lines.append(f"**描述**: {issue.description}")
+            if issue.suggestion:
+                lines.append(f"**建议**: {issue.suggestion}")
+            lines.append("")
+        
+        return "\n".join(lines)
 
     def _generate_task_id(self) -> str:
         """生成任务ID"""

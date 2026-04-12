@@ -1,13 +1,22 @@
 """规则匹配器"""
 
 import re
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
 
 from ...models.document import Document
 from ...models.rule import Rule, RuleMatchResult
 from ...utils.logging import get_logger
 
 logger = get_logger("engine.matcher")
+
+
+@dataclass
+class MatchingResult:
+    """匹配结果"""
+    issues: List = field(default_factory=list)
+    total_matches: int = 0
+    high_risk_count: int = 0
 
 
 class RuleMatcher:
@@ -29,6 +38,9 @@ class RuleMatcher:
         """
         try:
             # 根据匹配类型执行匹配
+            if rule.pattern is None:
+                return RuleMatchResult(rule_id=rule.id, rule_name=rule.name, matched=False)
+            
             pattern_type = rule.pattern.type
 
             if pattern_type == "regex":
@@ -39,11 +51,11 @@ class RuleMatcher:
                 return self._match_composite(rule, document)
             else:
                 logger.warning("unknown_pattern_type", type=pattern_type)
-                return RuleMatchResult(rule=rule, matched=False)
+                return RuleMatchResult(rule_id=rule.id, rule_name=rule.name, matched=False)
 
         except Exception as e:
             logger.error("match_failed", rule_id=rule.id, error=str(e))
-            return RuleMatchResult(rule=rule, matched=False)
+            return RuleMatchResult(rule_id=rule.id, rule_name=rule.name, matched=False)
 
     def _match_regex(self, rule: Rule, document: Document) -> RuleMatchResult:
         """正则匹配"""
@@ -70,10 +82,10 @@ class RuleMatcher:
         confidence = 1.0 if matched else 0.0
 
         return RuleMatchResult(
-            rule=rule,
+            rule_id=rule.id,
+            rule_name=rule.name,
             matched=matched,
             confidence=confidence,
-            matched_text=matched_texts[0] if matched_texts else None,
             location=locations[0] if locations else None,
         )
 
@@ -100,18 +112,21 @@ class RuleMatcher:
         matched = len(matched_texts) > 0
 
         return RuleMatchResult(
-            rule=rule,
+            rule_id=rule.id,
+            rule_name=rule.name,
             matched=matched,
             confidence=0.8 if matched else 0.0,
-            matched_text=matched_texts[0] if matched_texts else None,
             location=locations[0] if locations else None,
         )
 
     def _match_composite(self, rule: Rule, document: Document) -> RuleMatchResult:
         """复合条件匹配"""
+        if not rule.pattern:
+            return RuleMatchResult(rule_id=rule.id, rule_name=rule.name, matched=False)
+        
         conditions = rule.pattern.conditions
         if not conditions:
-            return RuleMatchResult(rule=rule, matched=False)
+            return RuleMatchResult(rule_id=rule.id, rule_name=rule.name, matched=False)
 
         # 所有条件都满足才算匹配
         matched = True
@@ -139,10 +154,10 @@ class RuleMatcher:
                     break
 
         return RuleMatchResult(
-            rule=rule,
+            rule_id=rule.id,
+            rule_name=rule.name,
             matched=matched,
             confidence=0.7 if matched else 0.0,
-            matched_text=matched_text,
         )
 
     def _get_compiled_pattern(self, pattern_str: str) -> re.Pattern:
@@ -157,3 +172,52 @@ class RuleMatcher:
             if ctx in text:
                 return True
         return False
+
+    def match_document(self, document: Document, rules: List[Rule]) -> MatchingResult:
+        """
+        匹配文档与所有规则
+
+        Args:
+            document: 文档
+            rules: 规则列表
+
+        Returns:
+            匹配结果
+        """
+        from ...models.issue import Issue, IssueLevel, IssueLocation, IssueRule
+
+        issues = []
+        for rule in rules:
+            if not rule.enabled:
+                continue
+
+            try:
+                result = self.match(rule, document)
+                if result.matched:
+                    severity = IssueLevel.HIGH if rule.severity.value == "high" else \
+                              IssueLevel.MEDIUM if rule.severity.value == "medium" else IssueLevel.LOW
+                    
+                    location = IssueLocation()
+                    if result.location:
+                        location.line = result.location.get("line", 0)
+                        location.start = result.location.get("start", 0)
+                        location.end = result.location.get("end", 0)
+                    
+                    issue = Issue(
+                        title=rule.name,
+                        description=rule.description or "",
+                        level=severity,
+                        category=rule.category.value if hasattr(rule.category, 'value') else str(rule.category),
+                        location=location,
+                        source="rule",
+                        rule=IssueRule(rule_id=rule.id, rule_name=rule.name)
+                    )
+                    issues.append(issue)
+            except Exception as e:
+                logger.error("rule_match_failed", rule_id=rule.id, error=str(e))
+
+        return MatchingResult(
+            issues=issues,
+            total_matches=len(issues),
+            high_risk_count=sum(1 for i in issues if i.level == IssueLevel.HIGH)
+        )
