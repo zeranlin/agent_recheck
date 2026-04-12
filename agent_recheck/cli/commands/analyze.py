@@ -10,11 +10,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from analyzer.engine.hybrid_engine import HybridAnalysisEngine
 from analyzer.parser.base import ParserFactory
-from models.report import AnalysisReport
+from ...models.report import AnalysisReport
 from report.json_reporter import JsonReporter
 from report.md_reporter import MarkdownReporter
 from report.html_reporter import HtmlReporter
-from utils.logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger("cli.analyze")
 console = Console()

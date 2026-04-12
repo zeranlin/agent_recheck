@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from utils.logging import setup_logging
+from ..utils.logging import setup_logging
 
 # 创建 Typer 应用
 app = typer.Typer(

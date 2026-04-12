@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.table import Table
 
 from tracker.metrics import MetricsTracker
-from utils.logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger("cli.stats")
 console = Console()

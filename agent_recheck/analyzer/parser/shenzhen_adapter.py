@@ -1,12 +1,17 @@
 """深圳格式适配器"""
 
 import re
-from typing import Optional
+from typing import Optional, List
+from dataclasses import dataclass, field
 
-from models.document import MarkedContent
-from utils.logging import get_logger
 
-logger = get_logger("parser.shenzhen_adapter")
+@dataclass
+class MarkedContent:
+    """标记内容"""
+    type: str = ""  # 实质性/重要参数
+    content: str = ""
+    line: int = 0
+    context: str = ""
 
 
 class ShenzhenAdapter:
@@ -24,7 +29,7 @@ class ShenzhenAdapter:
         self.substantive_mark = "★"
         self.important_mark = "▲"
 
-    def adapt(self, marked_contents: list[MarkedContent], full_text: str) -> list[MarkedContent]:
+    def adapt(self, marked_contents: List[MarkedContent], full_text: str) -> List[MarkedContent]:
         """
         适配深圳格式
 
@@ -70,12 +75,10 @@ class ShenzhenAdapter:
                     )
                 )
 
-        logger.info("shenzhen_adapter_applied", marked_count=len(adapted))
         return adapted
 
     def _clean_marked_text(self, text: str, mark: str) -> str:
         """清理标记文本"""
-        # 移除标记符号
         cleaned = text.replace(mark, "").strip()
         return cleaned
 
@@ -88,8 +91,8 @@ class ShenzhenAdapter:
         - ▲：重要参数（负偏离重点扣分）
         """
         marks = {
-            "substantive": [],  # 实质性条款
-            "important": [],     # 重要参数
+            "substantive": [],
+            "important": [],
         }
 
         lines = text.split("\n")

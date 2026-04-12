@@ -16,9 +16,8 @@ from datetime import datetime
 import json
 
 from .parser.base import ParsedDocument
-from .engine.hybrid_engine import HybridEngine, AnalysisResult
+from .engine.hybrid_engine import HybridAnalysisEngine as HybridEngine, AnalysisResult
 from .engine.fallback_engine import FallbackEngine
-from .consistency import ConsistencyChecker, ConsistencyResult
 from ..report.report_builder import ReportBuilder, ReportConfig
 
 
@@ -57,7 +56,7 @@ class ReviewTask:
     progress: float = 0.0  # 0.0 - 1.0
     stages: dict[str, dict] = field(default_factory=dict)
     result: Optional[AnalysisResult] = None
-    consistency_result: Optional[ConsistencyResult] = None
+    consistency_result: Optional[Any] = None
     error: Optional[str] = None
 
     def update_stage(self, stage: ReviewStage, status: str, data: dict = None) -> None:
@@ -237,7 +236,7 @@ class ReviewWorkflow:
         except Exception:
             return self.fallback_engine.analyze(document)
 
-    def _run_consistency_check(self, document: ParsedDocument) -> ConsistencyResult:
+    def _run_consistency_check(self, document: ParsedDocument) -> Any:
         """运行一致性检查"""
         checker = ConsistencyChecker(document)
         return checker.check_all()
@@ -258,7 +257,7 @@ class ReviewWorkflow:
         self,
         task: ReviewTask,
         result: AnalysisResult,
-        consistency: ConsistencyResult
+        consistency: Any
     ) -> dict:
         """生成报告"""
         reports = {}

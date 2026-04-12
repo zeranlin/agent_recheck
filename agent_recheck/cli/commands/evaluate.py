@@ -7,7 +7,7 @@ import typer
 from rich.console import Console
 
 from evaluator.accuracy_evaluator import AccuracyEvaluator
-from utils.logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger("cli.evaluate")
 console = Console()

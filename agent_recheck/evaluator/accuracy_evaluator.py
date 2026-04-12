@@ -16,7 +16,8 @@ from datetime import datetime
 import json
 import os
 
-from ..analyzer.engine.matcher import MatchResult, Issue
+from ..models.issue import Issue
+from ..analyzer.engine.matcher import RuleMatchResult as MatchResult
 from ..analyzer.llm.client import LLMClient
 
 

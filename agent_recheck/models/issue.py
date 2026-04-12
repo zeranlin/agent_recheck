@@ -1,63 +1,72 @@
-"""问题/风险点数据模型"""
+# -*- coding: utf-8 -*-
+"""
+问题数据模型
+"""
 
+from typing import Optional, List, Any
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
+from enum import Enum
 
 
-class IssueLocation(BaseModel):
+class IssueLevel(Enum):
+    """问题级别"""
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
+
+
+@dataclass
+class IssueLocation:
     """问题位置"""
-    chapter: Optional[str] = None
-    section: Optional[str] = None
-    article: Optional[str] = None
-    paragraph: Optional[str] = None
-    page: Optional[int] = None
-    line_start: int
-    line_end: int
-    table_index: Optional[int] = None
+    page: int = 0
+    line: int = 0
+    section: str = ""
+    start: int = 0
+    end: int = 0
+    context: str = ""
 
 
-class IssueEvidence(BaseModel):
+@dataclass
+class IssueEvidence:
     """问题证据"""
-    quote: str
-    location: IssueLocation
-    highlight: Optional[str] = None
-    context: Optional[str] = None
+    text: str = ""
+    type: str = ""  # original/matched/calculated
+    confidence: float = 0.0
 
 
-class IssueRule(BaseModel):
+@dataclass
+class IssueRule:
     """触发规则"""
-    id: str
-    name: str
-    reference: str
-    full_text: Optional[str] = None
+    rule_id: str = ""
+    rule_name: str = ""
+    category: str = ""
+    severity: str = ""
 
 
-class IssueSuggestion(BaseModel):
+@dataclass
+class IssueSuggestion:
     """修改建议"""
-    content: str
-    original: Optional[str] = None
+    type: str = ""  # remove/modify/add
+    original: str = ""
+    suggested: str = ""
+    reason: str = ""
 
 
-class Issue(BaseModel):
-    """问题/风险点模型"""
-    id: str
-    type: str  # "规则匹配", "LLM识别"
-    category: str
-    level: str  # "critical", "high", "medium", "low"
-    title: str
-    description: Optional[str] = None
-
-    evidence: IssueEvidence
-    rule: IssueRule
-    suggestion: IssueSuggestion
-
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
-    source: str = "rule"  # "rule" or "llm"
-
-    detected_at: datetime = Field(default_factory=datetime.now)
-
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+@dataclass
+class Issue:
+    """审查问题"""
+    issue_id: str = ""
+    title: str = ""
+    description: str = ""
+    level: IssueLevel = IssueLevel.MEDIUM
+    category: str = ""
+    location: IssueLocation = field(default_factory=IssueLocation)
+    evidence: List[IssueEvidence] = field(default_factory=list)
+    rule: Optional[IssueRule] = None
+    suggestion: Optional[IssueSuggestion] = None
+    confidence: float = 0.0
+    source: str = ""  # rule/llm/manual
+    metadata: dict = field(default_factory=dict)
+    created_at: datetime = field(default_factory=datetime.now)

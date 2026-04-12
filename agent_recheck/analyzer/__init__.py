@@ -36,7 +36,6 @@ from .llm import (
     StructuredOutputParser,
 )
 from .aggregator import IssueAggregator, BatchAggregator
-from .consistency import ConsistencyChecker, ConsistencyResult, ConsistencyType
 from .workflow import ReviewWorkflow, ReviewConfig, BatchReviewWorkflow, ReviewTask
 
 __all__ = [
@@ -64,10 +63,6 @@ __all__ = [
     # 聚合
     "IssueAggregator",
     "BatchAggregator",
-    # 一致性
-    "ConsistencyChecker",
-    "ConsistencyResult",
-    "ConsistencyType",
     # 工作流
     "ReviewWorkflow",
     "ReviewConfig",

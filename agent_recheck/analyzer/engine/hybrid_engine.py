@@ -13,10 +13,10 @@ from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
-from models.document import Document, ParsedDocument
-from models.report import AnalysisReport, ReportSummary
-from models.issue import Issue, IssueLevel
-from utils.logging import get_logger
+from ...models.document import Document, ParsedDocument
+from ...models.report import AnalysisReport, ReportSummary
+from ...models.issue import Issue, IssueLevel
+from ...utils.logging import get_logger
 
 from .rule_loader import RuleLoader
 from .rule_manager import RuleManager

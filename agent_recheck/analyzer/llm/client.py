@@ -3,7 +3,7 @@
 import asyncio
 from typing import Optional
 
-from utils.logging import get_logger
+from ...utils.logging import get_logger
 
 logger = get_logger("llm.client")
 

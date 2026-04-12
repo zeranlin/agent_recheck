@@ -1,0 +1,42 @@
+{
+  "case_id": "SAMPLE-001",
+  "document_name": "某单位办公设备采购招标文件.docx",
+  "document_path": "./tests/fixtures/sample_tender.docx",
+  "expected_issues": [
+    {
+      "issue_id": "SAMPLE-001_100_150",
+      "text": "本项目仅限深圳市本地企业参与投标",
+      "start_pos": 100,
+      "end_pos": 150,
+      "category": "discrimination",
+      "severity": "high",
+      "is_true_positive": true,
+      "notes": "地域歧视条款"
+    },
+    {
+      "issue_id": "SAMPLE-001_500_550",
+      "text": "供应商须具有ISO9001认证",
+      "start_pos": 500,
+      "end_pos": 550,
+      "category": "certification",
+      "severity": "medium",
+      "is_true_positive": true,
+      "notes": "认证要求合理"
+    },
+    {
+      "issue_id": "SAMPLE-001_800_850",
+      "text": "价格分权重占60%",
+      "start_pos": 800,
+      "end_pos": 850,
+      "category": "scoring",
+      "severity": "medium",
+      "is_true_positive": true,
+      "notes": "价格分权重偏高"
+    }
+  ],
+  "metadata": {
+    "total_annotations": 3,
+    "created_by": "system",
+    "created_at": "2026-04-12T00:00:00"
+  }
+}

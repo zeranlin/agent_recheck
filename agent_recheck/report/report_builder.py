@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
-from models.issue import Issue
-from models.report import Report, ReportSummary, ReportMetadata
+from ..models.issue import Issue
+from ..models.report import Report, ReportSummary, ReportMetadata
 
 
 @dataclass

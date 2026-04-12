@@ -3,9 +3,9 @@
 import re
 from typing import Optional
 
-from models.document import Document
-from models.rule import Rule, RuleMatchResult
-from utils.logging import get_logger
+from ...models.document import Document
+from ...models.rule import Rule, RuleMatchResult
+from ...utils.logging import get_logger
 
 logger = get_logger("engine.matcher")
 

@@ -13,8 +13,8 @@ from typing import List, Dict, Optional, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
-from models.issue import Issue, IssueLevel
-from utils.logging import get_logger
+from ...models.issue import Issue, IssueLevel
+from ...utils.logging import get_logger
 
 logger = get_logger("fallback_engine")
 

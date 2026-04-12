@@ -4,8 +4,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-from models.report import AnalysisReport
-from utils.logging import get_logger
+from ..models.report import AnalysisReport
+from ..utils.logging import get_logger
 
 logger = get_logger("report.md")
 

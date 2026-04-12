@@ -2,53 +2,86 @@
 
 import re
 from pathlib import Path
-from typing import Optional
-
-from docx import Document as DocxDocument
-from docx.table import Table as DocxTable
-
-from models.document import (
-    Document,
-    DocumentMetadata,
-    DocumentSection,
-    TableInfo,
-    MarkedContent,
-)
-from utils.logging import get_logger
-
-from .base import BaseParser
-from .shenzhen_adapter import ShenzhenAdapter
-
-logger = get_logger("parser.docx")
+from typing import Optional, List, Any
+from dataclasses import dataclass, field
+from datetime import datetime
 
 
-class DocxParser(BaseParser):
+@dataclass
+class DocumentMetadata:
+    """文档元数据"""
+    file_path: str = ""
+    file_name: str = ""
+    file_size: int = 0
+    file_type: str = "docx"
+    paragraph_count: int = 0
+    table_count: int = 0
+
+
+@dataclass
+class DocumentSection:
+    """文档章节"""
+    title: str = ""
+    level: int = 1
+    start_line: int = 0
+    end_line: int = 0
+    content: str = ""
+
+
+@dataclass
+class TableInfo:
+    """表格信息"""
+    index: int = 0
+    title: Optional[str] = None
+    rows: int = 0
+    cols: int = 0
+    start_line: int = 0
+    end_line: int = 0
+    is_nested: bool = False
+
+
+@dataclass
+class MarkedContent:
+    """标记内容"""
+    type: str = ""  # 实质性/重要参数
+    content: str = ""
+    line: int = 0
+    context: str = ""
+
+
+@dataclass
+class Document:
+    """文档对象"""
+    metadata: Optional[DocumentMetadata] = None
+    full_text: str = ""
+    sections: List[DocumentSection] = field(default_factory=list)
+    tables: List[TableInfo] = field(default_factory=list)
+    marked_contents: List[MarkedContent] = field(default_factory=list)
+    paragraphs: List[str] = field(default_factory=list)
+    parsed_at: datetime = field(default_factory=datetime.now)
+
+
+class DocxParser:
     """DOCX 文档解析器"""
 
     def __init__(self):
-        self.shenzhen_adapter = ShenzhenAdapter()
+        pass
 
     def parse(self, file_path: Path) -> Document:
         """解析 DOCX 文件"""
+        try:
+            from docx import Document as DocxDocument
+        except ImportError:
+            raise ImportError("python-docx not installed. Run: pip install python-docx")
+
         doc = DocxDocument(file_path)
 
-        # 提取元数据
         metadata = self._extract_metadata(file_path, doc)
-
-        # 提取全文
         full_text = self.extract_text(file_path)
-
-        # 提取章节
         sections = self._extract_sections(doc)
-
-        # 提取表格
         tables = self._extract_tables(doc)
-
-        # 提取标记内容（★ 和 ▲）
+        paragraphs = self._extract_paragraphs(doc)
         marked_contents = self._extract_marked_contents(doc)
-
-        # 应用深圳格式适配
-        marked_contents = self.shenzhen_adapter.adapt(marked_contents, full_text)
 
         return Document(
             metadata=metadata,
@@ -56,10 +89,16 @@ class DocxParser(BaseParser):
             sections=sections,
             tables=tables,
             marked_contents=marked_contents,
+            paragraphs=paragraphs,
         )
 
     def extract_text(self, file_path: Path) -> str:
         """提取纯文本"""
+        try:
+            from docx import Document as DocxDocument
+        except ImportError:
+            raise ImportError("python-docx not installed. Run: pip install python-docx")
+
         doc = DocxDocument(file_path)
         paragraphs = []
 
@@ -70,8 +109,13 @@ class DocxParser(BaseParser):
 
         return "\n".join(paragraphs)
 
-    def extract_tables(self, file_path: Path) -> list[dict]:
+    def extract_tables(self, file_path: Path) -> List[dict]:
         """提取表格"""
+        try:
+            from docx import Document as DocxDocument
+        except ImportError:
+            raise ImportError("python-docx not installed. Run: pip install python-docx")
+
         doc = DocxDocument(file_path)
         tables = []
 
@@ -82,23 +126,22 @@ class DocxParser(BaseParser):
 
         return tables
 
-    def _extract_metadata(self, file_path: Path, doc: DocxDocument) -> DocumentMetadata:
+    def _extract_metadata(self, file_path: Path, doc) -> DocumentMetadata:
         """提取元数据"""
         return DocumentMetadata(
             file_path=str(file_path),
             file_name=file_path.name,
-            file_size=file_path.stat().st_size,
+            file_size=file_path.stat().st_size if file_path.exists() else 0,
             file_type="docx",
             paragraph_count=len([p for p in doc.paragraphs if p.text.strip()]),
             table_count=len(doc.tables),
         )
 
-    def _extract_sections(self, doc: DocxDocument) -> list[DocumentSection]:
+    def _extract_sections(self, doc) -> List[DocumentSection]:
         """提取章节结构"""
         sections = []
         current_line = 0
 
-        # 章节标题模式
         chapter_pattern = re.compile(r"^第[一二三四五六七八九十百\d]+[章节条]")
         section_pattern = re.compile(r"^[一二三四五六七八九十]+、")
         article_pattern = re.compile(r"^\d+[.、]")
@@ -132,7 +175,7 @@ class DocxParser(BaseParser):
 
         return sections
 
-    def _extract_tables(self, doc: DocxDocument) -> list[TableInfo]:
+    def _extract_tables(self, doc) -> List[TableInfo]:
         """提取表格信息"""
         tables = []
 
@@ -143,15 +186,21 @@ class DocxParser(BaseParser):
 
         return tables
 
-    def _parse_table_info(self, table: DocxTable, index: int) -> Optional[TableInfo]:
+    def _extract_paragraphs(self, doc) -> List[str]:
+        """提取段落"""
+        paragraphs = []
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if text:
+                paragraphs.append(text)
+        return paragraphs
+
+    def _parse_table_info(self, table, index: int) -> Optional[TableInfo]:
         """解析表格信息"""
         rows = len(table.rows)
         cols = len(table.columns) if rows > 0 else 0
-
-        # 检查是否是嵌套表格
         is_nested = rows < 2 or cols < 2
 
-        # 尝试提取标题
         title = None
         if rows > 0:
             first_cell = table.cell(0, 0).text.strip()
@@ -163,13 +212,13 @@ class DocxParser(BaseParser):
             title=title,
             rows=rows,
             cols=cols,
-            start_line=0,  # 简化处理
+            start_line=0,
             end_line=0,
             is_nested=is_nested,
         )
 
-    def _extract_marked_contents(self, doc: DocxDocument) -> list[MarkedContent]:
-        """提取标记内容（★ 和 ▲）"""
+    def _extract_marked_contents(self, doc) -> List[MarkedContent]:
+        """提取标记内容"""
         marked = []
         line = 0
 
@@ -177,7 +226,6 @@ class DocxParser(BaseParser):
             text = para.text
             line += 1
 
-            # 提取 ★ 标记
             if "★" in text:
                 marked.append(
                     MarkedContent(
@@ -188,7 +236,6 @@ class DocxParser(BaseParser):
                     )
                 )
 
-            # 提取 ▲ 标记
             if "▲" in text:
                 marked.append(
                     MarkedContent(
@@ -201,7 +248,7 @@ class DocxParser(BaseParser):
 
         return marked
 
-    def _parse_table(self, table: DocxTable) -> dict:
+    def _parse_table(self, table) -> dict:
         """解析表格内容"""
         data = []
         for row in table.rows:

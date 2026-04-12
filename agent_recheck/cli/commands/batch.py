@@ -12,9 +12,9 @@ from rich.table import Table
 
 from analyzer.engine.hybrid_engine import HybridAnalysisEngine
 from analyzer.parser.base import ParserFactory
-from models.report import AnalysisReport
+from ...models.report import AnalysisReport
 from report.json_reporter import JsonReporter
-from utils.logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger("cli.batch")
 console = Console()

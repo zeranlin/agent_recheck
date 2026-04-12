@@ -7,9 +7,9 @@ from typing import Optional
 import yaml
 from pydantic import ValidationError
 
-from models.rule import Rule, RuleCategory, RiskLevel, PatternMatch, RuleReference, RuleSuggestion
-from utils.logging import get_logger
-from utils.path import PathUtils
+from ...models.rule import Rule, RuleCategory, RiskLevel, PatternMatch, RuleReference, RuleSuggestion
+from ...utils.logging import get_logger
+from ...utils.path import PathUtils
 
 logger = get_logger("engine.rule_loader")
 

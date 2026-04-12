@@ -2,9 +2,26 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Type
+from typing import Type, Optional, List, Any
+from dataclasses import dataclass, field
+from datetime import datetime
 
-from models.document import Document
+
+@dataclass
+class Document:
+    """文档对象"""
+    file_path: str
+    file_type: str
+    paragraphs: List[str] = field(default_factory=list)
+    tables: List[Any] = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)
+    parsed_at: datetime = field(default_factory=datetime.now)
+
+
+# 保持向后兼容
+ParsedDocument = Document
+ParsedSection = Document
+ParsedParagraph = Document
 
 
 class BaseParser(ABC):

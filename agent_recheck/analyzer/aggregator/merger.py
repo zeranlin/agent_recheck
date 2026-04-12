@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 import hashlib
 
-from models.issue import Issue, IssueLevel
+from ...models.issue import Issue, IssueLevel
 
 
 @dataclass

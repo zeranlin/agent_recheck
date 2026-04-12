@@ -6,8 +6,8 @@ from typing import Optional
 
 import yaml
 
-from utils.logging import get_logger
-from utils.path import PathUtils
+from ..utils.logging import get_logger
+from ..utils.path import PathUtils
 
 logger = get_logger("knowledge.sync")
 

@@ -13,9 +13,9 @@
 """
 
 from .rule_loader import RuleLoader
-from .matcher import RuleMatcher, MatchResult
+from .matcher import RuleMatcher, RuleMatchResult as MatchResult
 from .rule_manager import RuleManager
-from .hybrid_engine import HybridEngine, AnalysisResult
+from .hybrid_engine import HybridAnalysisEngine as HybridEngine, AnalysisResult
 from .local_rules import LocalRuleEngine, RegionDetector
 from .scoring_parser import ScoringParser, ScoringStandard, ScoringItem, ScoreType
 from .fallback_engine import FallbackEngine, FallbackMode, FallbackConfig, GracefulDegradation
@@ -30,6 +30,7 @@ __all__ = [
     'RuleManager',
     # 混合分析
     'HybridEngine',
+    'HybridAnalysisEngine',
     'AnalysisResult',
     # 本地化规则
     'LocalRuleEngine',

@@ -4,8 +4,8 @@ from rich.console import Console
 from rich.table import Table
 
 from knowledge.sync import KnowledgeSync
-from utils.path import PathUtils
-from utils.logging import get_logger
+from ..utils.path import PathUtils
+from ..utils.logging import get_logger
 
 logger = get_logger("cli.knowledge")
 console = Console()

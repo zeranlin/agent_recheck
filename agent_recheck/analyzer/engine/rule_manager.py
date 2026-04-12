@@ -6,8 +6,8 @@ from typing import Optional
 
 import yaml
 
-from models.rule import Rule
-from utils.logging import get_logger
+from ...models.rule import Rule
+from ...utils.logging import get_logger
 
 logger = get_logger("engine.rule_manager")
 

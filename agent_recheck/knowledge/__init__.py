@@ -3,7 +3,7 @@
 知识库模块
 """
 
-from .shenzhen import (
+from .regulations.shenzhen import (
     ShenzhenKnowledgeBase,
     Regulation,
     PolicyInterpretation,

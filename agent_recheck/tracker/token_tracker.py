@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from collections import defaultdict
 
-from utils.logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger("tracker.token")
 
