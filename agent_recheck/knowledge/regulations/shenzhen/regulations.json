@@ -1,0 +1,64 @@
+{
+  "regulations": [
+    {
+      "id": "SZ-PURCHASE-001",
+      "title": "深圳经济特区政府采购条例",
+      "code": "SZFG-2022-1",
+      "category": "采购条例",
+      "effective_date": "2022-03-01",
+      "issuer": "深圳市人民代表大会常务委员会",
+      "content": "为了规范深圳经济特区政府采购行为，提高政府采购资金的使用效益，维护社会公共利益，保护政府采购当事人的合法权益，促进廉政建设，制定本条例。",
+      "keywords": ["政府采购", "供应商", "资格审查", "中小企业", "节能环保"],
+      "related_regulations": ["SZ-PURCHASE-002", "NDRC-PROC-001"],
+      "notes": "深圳市政府采购的基本法规"
+    },
+    {
+      "id": "SZ-PURCHASE-002",
+      "title": "深圳经济特区政府采购条例实施细则",
+      "code": "SZFG-2022-2",
+      "category": "采购条例",
+      "effective_date": "2022-05-01",
+      "issuer": "深圳市财政局",
+      "content": "《深圳经济特区政府采购条例》的具体实施规定，明确了采购程序、采购方式、合同管理等内容。",
+      "keywords": ["采购程序", "采购方式", "公开招标", "竞争性谈判"],
+      "related_regulations": ["SZ-PURCHASE-001"],
+      "notes": "实施细则是采购条例的具体操作指南"
+    },
+    {
+      "id": "SZ-SME-001",
+      "title": "深圳政府采购促进中小企业发展若干措施",
+      "code": "SZFW-2023-15",
+      "category": "中小企业促进",
+      "effective_date": "2023-01-01",
+      "issuer": "深圳市财政局",
+      "content": "落实政府采购促进中小企业发展政策，通过预留份额、价格扣除等方式支持中小企业参与政府采购活动。",
+      "keywords": ["中小企业预留", "价格扣除", "预付款", "分包"],
+      "related_regulations": ["SME-PROMO-001"],
+      "notes": "核心：预留30%以上份额给中小企业"
+    },
+    {
+      "id": "SZ-FAIR-001",
+      "title": "深圳政府采购公平竞争审查办法",
+      "code": "SZFW-2023-08",
+      "category": "公平竞争",
+      "effective_date": "2023-03-01",
+      "issuer": "深圳市财政局",
+      "content": "政府采购文件不得含有歧视性或限制性条款，保障各类市场主体平等参与政府采购活动。",
+      "keywords": ["公平竞争", "歧视性条款", "资质要求", "地域限制"],
+      "related_regulations": ["ANTITRUST-001"],
+      "notes": "重点审查技术参数、资质要求等"
+    },
+    {
+      "id": "SZ-PRICE-001",
+      "title": "深圳政府采购价格评审管理办法",
+      "code": "SZFW-2022-20",
+      "category": "价格评审",
+      "effective_date": "2022-06-01",
+      "issuer": "深圳市财政局",
+      "content": "规范政府采购价格评审行为，合理设置价格分权重，防止恶性低价竞争。",
+      "keywords": ["价格分权重", "最低价法", "综合评分法", "价格评审"],
+      "related_regulations": ["SZ-PURCHASE-002"],
+      "notes": "价格分权重一般不超过60%"
+    }
+  ]
+}

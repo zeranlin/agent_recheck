@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-知识库模块
+深圳知识库模块
 """
 
-from .shenzhen import (
+from .knowledge_base import (
     ShenzhenKnowledgeBase,
     Regulation,
     PolicyInterpretation,
