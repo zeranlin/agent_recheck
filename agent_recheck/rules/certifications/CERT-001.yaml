@@ -1,0 +1,28 @@
+id: CERT-001
+name: SA8000认证不得作为资格条件
+category: 认证证书
+level: high
+
+pattern:
+  type: keyword
+  match:
+    - "SA8000"
+    - "社会责任认证"
+  exclude_context:
+    - "优先"
+    - "加分项"
+
+verification:
+  check_type: negative
+  scope:
+    - 资格条件
+    - 实质性条款
+
+reference:
+  law: "政府采购法实施条例"
+  article: "第二十条"
+  full_text: "不得以不合理的条件对供应商实行差别待遇或者歧视待遇"
+
+suggestion:
+  template: "删除{证书名称}作为资格条件要求，如确需可作为评分加分项"
+  example: "删除SA8000认证作为投标资格条件"

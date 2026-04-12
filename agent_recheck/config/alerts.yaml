@@ -1,0 +1,34 @@
+# 告警配置
+
+alerts:
+  - name: high_error_rate
+    condition: error_rate > 5%
+    severity: critical
+    notification:
+      - email
+      - webhook
+
+  - name: llm_service_down
+    condition: llm.call.failed > 10 consecutive
+    severity: critical
+    notification:
+      - sms
+      - webhook
+
+  - name: high_latency
+    condition: analysis.duration > 60s
+    severity: warning
+    notification:
+      - webhook
+
+  - name: token_quota_warning
+    condition: token.consumed > 80% quota
+    severity: warning
+    notification:
+      - email
+
+  - name: rule_conflict
+    condition: rule.conflict.detected
+    severity: warning
+    notification:
+      - webhook

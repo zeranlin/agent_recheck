@@ -1,0 +1,27 @@
+# 规则模板
+
+id: DIS-XXX
+name: 规则名称
+category: 非歧视性  # 非歧视性 / 采购需求 / 评分标准 / 合同条款 / 认证证书
+level: high  # critical / high / medium / low
+
+pattern:
+  type: keyword  # keyword / regex / composite
+  match:
+    - "关键词1"
+    - "关键词2"
+  exclude_context:
+    - "排除的上下文1"
+    - "排除的上下文2"
+
+verification:
+  check_type: negative  # negative / positive
+
+reference:
+  law: "法规名称"
+  article: "条款编号"
+  full_text: "法规原文"
+
+suggestion:
+  template: "修改建议模板"
+  example: "修改示例"

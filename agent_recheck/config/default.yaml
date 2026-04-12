@@ -1,0 +1,57 @@
+# 默认配置文件
+
+# LLM 配置
+llm:
+  model: "qwen3.5-27b"
+  api_base: "http://localhost:8000/v1"
+  timeout: 30
+  max_retries: 3
+  fallback_enabled: true
+
+# 规则引擎配置
+rules:
+  enabled: true
+  categories:
+    - discrimination    # 非歧视性
+    - procurement       # 采购需求
+    - scoring          # 评分标准
+    - contract         # 合同条款
+    - certification    # 认证证书
+  confidence_threshold: 0.7
+
+# 解析器配置
+parser:
+  max_file_size: 104857600  # 100MB
+  supported_formats:
+    - docx
+    - doc
+    - pdf
+  chunk_size: 2000  # LLM 分段大小
+
+# 深圳格式适配
+shenzhen:
+  enabled: true
+  marks:
+    substantive: "★"    # 实质性条款
+    important: "▲"     # 重要参数
+
+# 报告配置
+report:
+  default_format: "json"  # json, markdown, html
+  include_context: true
+  max_evidence_length: 500
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "json"  # json, console
+  file: null
+
+# 监控配置
+monitoring:
+  enabled: true
+  metrics:
+    - parse_duration
+    - rule_hits
+    - llm_calls
+    - analysis_duration

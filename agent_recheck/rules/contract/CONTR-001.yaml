@@ -1,0 +1,23 @@
+id: CONTR-001
+name: 违约金比例不得超过法定标准
+category: 合同条款
+level: high
+
+pattern:
+  type: regex
+  match:
+    - "违约金.{0,5}(每日|每天).{0,10}(3|5|10|15)‰"
+    - "违约金.{0,5}(3|5|10|15)‰.{0,10}(每日|每天)"
+    - "逾期.{0,5}(3|5|10|15)‰"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "民法典"
+  article: "第五百八十五条"
+  full_text: "约定的违约金超过造成损失的30%的，属于过高"
+
+suggestion:
+  template: "违约金比例应调整为不超过合同金额的{percent}%"
+  example: "违约金调整为每日万分之五（不超过合同金额的10%）"

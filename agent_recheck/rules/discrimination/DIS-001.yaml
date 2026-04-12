@@ -1,0 +1,27 @@
+id: DIS-001
+name: 禁止限定特定行政区域业绩
+category: 非歧视性
+level: high
+
+pattern:
+  type: regex
+  match:
+    - "(北京|上海|广东|深圳|广州).{0,10}业绩"
+    - ".{0,5}省.{0,10}业绩"
+    - "(深圳市|广州市|北京市|上海市).{0,15}(业绩|案例)"
+  exclude_context:
+    - "全国"
+    - "不限"
+    - "全国范围内"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "政府采购法实施条例"
+  article: "第二十条第四款"
+  full_text: "以特定行政区域或者特定行业的业绩作为加分条件"
+
+suggestion:
+  template: "修改为'投标截止前{years}年内完成的政府采购业绩'，删除特定区域限制"
+  example: "本项目要求供应商具有投标截止前3年内完成的政府采购业绩"

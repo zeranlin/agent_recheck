@@ -1,0 +1,26 @@
+id: SCOR-001
+name: 评分标准必须量化
+category: 评分标准
+level: high
+
+pattern:
+  type: keyword
+  match:
+    - "由评委"
+    - "酌情"
+    - "综合考虑"
+    - "根据情况"
+  exclude_context:
+    - "量化指标"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "87号令"
+  article: "第五十五条"
+  full_text: "评审因素应当细化和量化"
+
+suggestion:
+  template: "将评分标准量化为具体分值范围"
+  example: "技术方案完整性：优秀(15分)、良好(10分)、一般(5分)"

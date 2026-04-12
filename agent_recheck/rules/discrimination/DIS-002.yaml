@@ -1,0 +1,27 @@
+id: DIS-002
+name: 禁止指定品牌或专利
+category: 非歧视性
+level: high
+
+pattern:
+  type: keyword
+  match:
+    - "指定品牌"
+    - "专利产品"
+    - "唯一品牌"
+    - "只能使用"
+  exclude_context:
+    - "参考品牌"
+    - "相当于"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "政府采购法实施条例"
+  article: "第二十条第六款"
+  full_text: "指定特定专利、商标、品牌或者供应商"
+
+suggestion:
+  template: "删除品牌指定，修改为'同等档次的产品'"
+  example: "技术要求中不得指定特定品牌"

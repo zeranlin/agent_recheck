@@ -1,0 +1,23 @@
+id: DIS-003
+name: 禁止限定本地化服务要求
+category: 非歧视性
+level: high
+
+pattern:
+  type: regex
+  match:
+    - "(本地|当地|本市|本地).{0,10}(服务|网点|机构|分公司)"
+    - "必须在.+(有|设).{0,5}(服务|网点)"
+    - "(深圳|广州|本地).{0,10}(服务|网点)"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "政府采购法实施条例"
+  article: "第二十条第七款"
+  full_text: "设定与采购项目的具体特点和实际需要不相适应或者与合同履行无关的条件"
+
+suggestion:
+  template: "删除本地化服务要求，允许供应商通过合理方式提供服务"
+  example: "供应商可通过远程服务或授权服务机构提供售后服务"
