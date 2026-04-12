@@ -1,0 +1,56 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 人员资质
+
+id: QUAL-001
+name: 项目负责人资质要求合理性
+category: qualification
+level: medium
+description: |
+  项目负责人资质要求应与项目规模、复杂程度相匹配，
+  不得设置过高的资质要求排除中小企业。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "项目负责人"
+    - "项目经理"
+    - "技术负责人"
+    - "现场负责人"
+
+# 上下文验证
+verification:
+  check_type: contextual
+  
+  # 需要检查资质级别
+  extract_qualifications:
+    - "高级工程师"
+    - "正高级工程师"
+    - "一级建造师"
+    - "注册造价工程师"
+    - "注册监理工程师"
+  
+  # 合规判断
+  reasonableness_check:
+    small_project:  # 预算<100万
+      acceptable: ["工程师", "二级建造师", "助理工程师"]
+      excessive: ["正高级工程师", "一级建造师"]
+    
+    medium_project:  # 100万-500万
+      acceptable: ["工程师", "二级建造师"]
+      excessive: ["正高级工程师"]
+    
+    large_project:  # >500万
+      acceptable: ["高级工程师", "一级建造师"]
+      excessive: []
+
+# 关联法规
+reference:
+  - name: "政府采购法"
+    article: "第二十二条"
+    note: "不得以不合理条件限制或排斥潜在供应商"
+
+# 建议模板
+suggestion:
+  template: "根据{项目规模}项目的实际需求，合理设置项目负责人资质要求"

@@ -1,0 +1,45 @@
+# -*- coding: utf-8 -*-
+# 合同条款规则 - 履约保证金
+
+id: CONTR-002
+name: 履约保证金比例合理性
+category: contract
+level: medium
+description: |
+  履约保证金不得超过合同金额的10%，
+  过高会增加供应商负担。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "履约保证金"
+    - "履约保函"
+    - "保证金"
+
+# 验证规则
+verification:
+  check_type: value_extraction
+  
+  # 提取保证金比例
+  extract_patterns:
+    - "履约保证金.*?合同价格的?(\\d+(?:\\.\\d+)?)\\s*%"
+    - "不超过.*?(\\d+(?:\\.\\d+)?)\\s*%"
+    - "(\\d+(?:\\.\\d+)?)\\s*%.*?保证金"
+  
+  # 阈值
+  thresholds:
+    warning: 10  # 超过10%给出警告
+    critical: 20  # 超过20%为严重问题
+
+# 关联法规
+reference:
+  - name: "政府采购法实施条例"
+    article: "第四十八条"
+  - name: "深圳市政府采购招标文件"
+
+# 建议模板
+suggestion:
+  template: "建议将履约保证金比例调整为不超过合同金额的{建议值}%"
+  default_suggestion: "建议不超过合同金额的10%"

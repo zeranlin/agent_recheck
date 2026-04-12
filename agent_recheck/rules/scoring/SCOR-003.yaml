@@ -1,0 +1,51 @@
+# -*- coding: utf-8 -*-
+# 评分标准规则 - 主观分过高
+
+id: SCOR-003
+name: 主观分权重过高风险
+category: scoring
+level: medium
+description: |
+  技术分、商务分等主观分权重过高可能导致评审不公平，
+  应保持合理的客观分比例。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "技术分"
+    - "技术得分"
+    - "方案得分"
+    - "商务分"
+    - "综合评分"
+
+# 验证规则
+verification:
+  check_type: contextual
+  
+  # 需要提取完整的评分结构
+  requires_full_context: true
+  
+  # 检查项
+  checks:
+    - name: 主观分占比
+      threshold: 50  # 主观分超过50%给出警告
+      scope: [技术分, 商务分, 方案分]
+    
+    - name: 单一评审因素分值
+      threshold: 40  # 单一因素分值不超过40%
+      scope: [技术分, 商务分]
+
+# 关联法规
+reference:
+  - name: "政府采购货物和服务招标投标管理办法"
+    article: "第五十五条"
+    note: "评审因素应当细化和量化"
+
+# 建议模板
+suggestion:
+  template: "建议增加客观分权重，减少主观分权重，提高评审透明度"
+  examples:
+    - "将技术参数证书化，减少技术方案主观评分"
+    - "明确各评分因素的评分标准"

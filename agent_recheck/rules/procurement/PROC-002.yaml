@@ -1,0 +1,46 @@
+# -*- coding: utf-8 -*-
+# 采购需求规则 - 实质性条款完整性
+
+id: PROC-002
+name: 实质性条款不得缺失
+category: procurement_requirement
+level: high
+description: |
+  采购文件中必须包含完整的实质性条款，
+  包括交货期、付款方式、质保期等核心条款。
+enabled: true
+
+# 触发条件
+trigger:
+  type: composite
+  conditions:
+    - type: keyword
+      match:
+        - "实质性条款"
+        - "实质性要求"
+        - "★"
+      severity: high
+
+# 上下文验证
+verification:
+  check_type: completeness
+  
+  # 必须包含的实质性条款
+  required_items:
+    - name: 交货期
+      patterns: ["交货期", "交付时间", "供货期"]
+    - name: 付款方式
+      patterns: ["付款", "支付方式", "结算"]
+    - name: 质保期
+      patterns: ["质保期", "质量保证期", "保修期"]
+    - name: 履约期限
+      patterns: ["履约期限", "服务期", "工期"]
+
+# 关联法规
+reference:
+  - name: "政府采购货物和服务招标投标管理办法"
+    article: "第十九条"
+
+# 建议模板
+suggestion:
+  template: "建议补充{条款名称}的实质性要求"

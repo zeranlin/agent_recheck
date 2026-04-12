@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+# 深圳特有规则 - 中小企业预留份额
+
+id: SZ-001
+name: 深圳政府采购中小企业预留份额
+category: shenzhen
+level: medium
+description: |
+  深圳政府采购项目应预留一定份额给中小企业，
+  具体比例根据项目性质确定。
+enabled: true
+
+# 适用地区
+applicable_regions:
+  - 深圳
+
+# 触发条件
+trigger:
+  type: composite
+  conditions:
+    - type: keyword
+      match:
+        - "预留"
+        - "中小企业"
+        - "小微企业"
+
+# 验证规则
+verification:
+  check_type: value_check
+  
+  # 检查预留比例
+  thresholds:
+    small_project:  # 200万以下
+      minimum: 30  # 最低预留30%
+    medium_project:  # 200万-1000万
+      minimum: 20  # 最低预留20%
+    large_project:  # 1000万以上
+      minimum: 10  # 最低预留10%
+
+# 关联法规
+reference:
+  - name: "深圳经济特区政府采购条例"
+  - name: "深圳市政府采购促进中小企业发展暂行办法"
+
+# 建议模板
+suggestion:
+  template: "建议根据项目预算，预留不低于{minimum}%的份额给中小企业"

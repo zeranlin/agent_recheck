@@ -1,0 +1,60 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 业绩要求
+
+id: QUAL-002
+name: 业绩要求地域限定
+category: discrimination
+level: high
+description: |
+  业绩要求不得限定特定地域，包括本省、本市、本区等，
+  违反非歧视性原则。
+enabled: true
+
+# 触发条件
+trigger:
+  type: composite
+  conditions:
+    - type: keyword
+      match:
+        - "业绩"
+        - "类似项目"
+        - "成功案例"
+      severity: high
+    
+    - type: keyword
+      match:
+        - "本省"
+        - "本市区"
+        - "本区"
+        - "本市"
+        - "深圳市"
+        - "广东省"
+      severity: critical
+
+# 上下文验证
+verification:
+  check_type: contextual
+  
+  # 需要同时匹配业绩和地域限定
+  require_both: true
+  
+  # 排除情况
+  exclusions:
+    - "参与过本项目"
+    - "类似本项目"
+    - "同等规模"
+
+# 关联法规
+reference:
+  - name: "政府采购法实施条例"
+    article: "第二十条"
+    note: "不得以不合理条件对供应商实行差别待遇或者歧视待遇"
+  - name: "政府采购货物和服务招标投标管理办法"
+    article: "第十七条"
+
+# 建议模板
+suggestion:
+  template: "删除业绩要求的地域限定，业绩要求应适用于全国范围"
+  examples:
+    - "删除'深圳市内业绩'要求"
+    - "修改为'广东省内或全国范围内的类似项目业绩'"

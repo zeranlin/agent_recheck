@@ -1,0 +1,59 @@
+# -*- coding: utf-8 -*-
+# 非歧视性规则 - 中小企业相关
+
+id: DIS-004
+name: 禁止设置歧视中小企业条款
+category: discrimination
+level: high
+description: |
+  不得在采购文件中设置不利于中小企业的条款，
+  包括但不限于过高的资质要求、不合理的业绩要求等。
+enabled: true
+
+# 触发条件：检测到可能歧视中小企业的条款
+trigger:
+  type: composite
+  conditions:
+    - type: keyword
+      match:
+        - "注册资本"
+        - "成立年限"
+        - "员工人数"
+        - "营业额"
+      severity: medium
+    
+    - type: keyword
+      match:
+        - "大型企业"
+        - "国有企业"
+        - "上市公司"
+      severity: high
+
+# 验证规则
+verification:
+  check_type: contextual
+  
+  # 合规条件
+  acceptable_conditions:
+    - 注册资本要求与项目规模相当（≤100万的小项目要求注册资本≥1000万为不合理）
+    - 成立年限要求≤3年（过长的年限要求可能排除新企业）
+    - 营业额要求与采购金额比例合理（≤5倍）
+  
+  # 需要人工审核的情况
+  require_manual_review:
+    - 涉及特定规模企业的条款
+    - 涉及特定所有制企业的条款
+
+# 关联法规
+reference:
+  - name: "政府采购促进中小企业发展暂行办法"
+    article: "第五条"
+  - name: "中小企业划型标准规定"
+
+# 建议模板
+suggestion:
+  template: "根据项目实际需求合理设置{条件}要求，避免对中小企业造成歧视"
+  examples:
+    - "注册资本要求建议与项目规模相匹配"
+    - "建议删除或降低成立年限要求"
+    - "营业额要求建议不超过采购预算的5倍"

@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+# 认证证书规则 - SA8000社会责任认证
+
+id: CERT-003
+name: SA8000认证不得作为资格条件
+category: certification
+level: high
+description: |
+  SA8000认证是社会责任认证，不应作为政府采购项目的
+  资格条件，可能构成对特定供应商的指向。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "SA8000"
+    - "社会责任认证"
+    - "社会责任管理体系"
+
+# 上下文验证
+verification:
+  check_type: negative
+  
+  # SA8000不应出现在资格条件中
+  check_scope:
+    - qualification  # 资格条件中 - 不允许
+    - scoring  # 评分标准中 - 需评估
+  
+  # 排除情况
+  exclusions:
+    - 仅作为参考
+    - 加分项而非必要条件
+
+# 关联法规
+reference:
+  - name: "政府采购法实施条例"
+    article: "第二十条"
+    note: "不得以不合理的条件对供应商实行差别待遇或者歧视待遇"
+
+# 建议模板
+suggestion:
+  template: "建议删除SA8000认证作为资格条件要求，如确需应说明合理理由"

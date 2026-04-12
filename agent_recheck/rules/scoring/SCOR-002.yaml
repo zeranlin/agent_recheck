@@ -1,0 +1,42 @@
+# -*- coding: utf-8 -*-
+# 评分标准规则 - 价格分权重
+
+id: SCOR-002
+name: 价格分权重超标风险
+category: scoring
+level: medium
+description: |
+  综合评分法中价格分权重过高可能影响采购质量，
+  价格分权重一般不超过60%。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "价格分"
+    - "价格权重"
+    - "报价得分"
+
+# 验证规则
+verification:
+  check_type: value_extraction
+  
+  # 从文本中提取价格分权重
+  extract_pattern: "价格分.*?(\\d+(?:\\.\\d+)?)\\s*%"
+  
+  # 阈值
+  thresholds:
+    warning: 60  # 价格分超过60%给出警告
+    critical: 70  # 价格分超过70%为严重问题
+
+# 关联法规
+reference:
+  - name: "政府采购货物和服务招标投标管理办法"
+    article: "第五十五条"
+    note: "货物项目的价格分值占总分值比重不得低于30%；服务项目的价格分值占总分值比重不得低于10%"
+
+# 建议模板
+suggestion:
+  template: "建议将价格分权重调整为{建议值}%，以保证采购质量和竞争性"
+  default_suggestion: "建议价格分权重不超过60%"

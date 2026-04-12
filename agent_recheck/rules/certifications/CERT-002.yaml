@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+# 认证证书规则 - ISO9001质量管理体系认证
+
+id: CERT-002
+name: ISO9001认证作为资格条件
+category: certification
+level: medium
+description: |
+  ISO9001质量管理体系认证通常可作为资格条件，
+  但需注意不得与采购需求不匹配。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "ISO9001"
+    - "质量管理体系"
+    - "质量管理体系认证"
+
+# 验证规则
+verification:
+  check_type: contextual
+  
+  # 检查出现位置
+  check_scope:
+    - qualification  # 资格条件中 - 通常允许
+    - scoring  # 评分标准中 - 可接受
+    - technical  # 技术要求中 - 需评估合理性
+  
+  # 合理性检查
+  reasonableness:
+    - 与采购产品/服务的质量相关
+    - 认证范围覆盖采购内容
+
+# 关联法规
+reference:
+  - name: "认证认可条例"
+  - name: "质量管理体系要求"
+
+# 建议模板
+suggestion:
+  template: "如确需ISO9001认证，请确保认证范围覆盖本次采购内容"
