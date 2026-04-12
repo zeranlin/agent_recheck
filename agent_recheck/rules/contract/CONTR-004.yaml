@@ -1,0 +1,33 @@
+id: CONTR-004
+name: 付款条件合理性检查
+category: contract
+severity: medium
+description: 检查付款条件是否合理
+
+legal_basis:
+  - name: 《保障中小企业款项支付条例》
+    article: 相关规定
+    content: "机关、事业单位应当自交付之日起30日内支付款项"
+
+risk_level: medium
+
+patterns:
+  - pattern: "预付款|进度款|尾款|付款方式|付款条件"
+    description: "检测付款条件描述"
+
+keywords:
+  - 预付款
+  - 进度款
+  - 尾款
+  - 付款方式
+  - 付款条件
+
+validation:
+  - type: custom
+    function: check_payment_terms
+    max_advance_ratio: 30
+    error_message: "预付款比例不宜超过30%"
+
+suggestions:
+  - description: "合理设置预付款比例，一般不超过30%"
+    priority: medium

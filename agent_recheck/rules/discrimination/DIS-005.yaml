@@ -1,0 +1,34 @@
+id: DIS-005
+name: 注册资本歧视性要求
+category: discrimination
+severity: high
+description: 检查注册资本要求是否与项目规模相匹配
+
+legal_basis:
+  - name: 《中小企业促进法》
+    article: 第四十条
+    content: "不得在企业注册资本等方面设置歧视性条件"
+
+risk_level: high
+
+patterns:
+  - pattern: "注册资本[^\\d]{0,20}(\\d+)万元"
+    description: "检测注册资本要求"
+  - pattern: "注册资金[^\\d]{0,20}(\\d+)万元"
+    description: "检测注册资金要求"
+
+keywords:
+  - 注册资本
+  - 注册资金
+  - 净资产
+  - 实收资本
+
+validation:
+  - type: custom
+    function: check_capital_requirement
+    max_ratio: 0.3
+    error_message: "注册资本要求可能过高，与项目规模不匹配"
+
+suggestions:
+  - description: "根据项目规模合理设置注册资本要求"
+    priority: high

@@ -1,0 +1,32 @@
+id: SCOR-004
+name: 主观分权重上限检查
+category: scoring
+severity: medium
+description: 检查主观评审因素权重是否合理
+
+legal_basis:
+  - name: 《政府采购货物和服务招标投标管理办法》
+    article: 第五十五条
+    content: "评审因素应当细化和量化"
+
+risk_level: medium
+
+patterns:
+  - pattern: "技术分|商务分|综合分"
+    description: "检测评审因素设置"
+
+keywords:
+  - 技术分
+  - 商务分
+  - 主观分
+  - 专家评分
+
+validation:
+  - type: custom
+    function: check_subjective_weight
+    max_weight: 40
+    error_message: "主观分权重不宜超过40%"
+
+suggestions:
+  - description: "将主观分权重控制在40%以内"
+    priority: medium

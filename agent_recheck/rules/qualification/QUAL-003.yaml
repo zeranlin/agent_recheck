@@ -1,0 +1,32 @@
+id: QUAL-003
+name: 业绩要求合理性检查
+category: qualification
+severity: medium
+description: 检查业绩要求是否与采购项目规模相匹配
+
+legal_basis:
+  - name: 《政府采购法》
+    article: 第二十二条
+    content: "不得以不合理条件限制或者排斥潜在供应商"
+
+risk_level: medium
+
+patterns:
+  - pattern: "业绩要求|类似项目|合同业绩"
+    description: "检测业绩要求描述"
+
+keywords:
+  - 业绩要求
+  - 类似项目
+  - 合同业绩
+  - 项目经验
+
+validation:
+  - type: custom
+    function: check_performance_requirement
+    max_contract_value_ratio: 2.0
+    error_message: "业绩要求可能过高，与项目规模不匹配"
+
+suggestions:
+  - description: "业绩要求应与采购项目规模相匹配"
+    priority: medium

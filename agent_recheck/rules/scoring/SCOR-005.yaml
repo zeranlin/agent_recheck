@@ -1,0 +1,30 @@
+id: SCOR-005
+name: 评审标准量化检查
+category: scoring
+severity: medium
+description: 检查评审标准是否量化可操作
+
+legal_basis:
+  - name: 《政府采购货物和服务招标投标管理办法》
+    article: 第五十五条
+    content: "评审因素应当细化和量化"
+
+risk_level: medium
+
+patterns:
+  - pattern: "评审因素|评分标准|分值设置"
+    description: "检测评审标准描述"
+
+keywords:
+  - 评审因素
+  - 评分标准
+  - 分值设置
+  - 打分办法
+
+validation:
+  - type: quantifiable
+    error_message: "评审标准应尽可能量化，减少主观分"
+
+suggestions:
+  - description: "将评审标准细化和量化，便于客观评审"
+    priority: medium

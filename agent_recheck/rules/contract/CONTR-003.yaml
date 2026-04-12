@@ -1,0 +1,34 @@
+id: CONTR-003
+name: 履约保证金上限检查
+category: contract
+severity: medium
+description: 检查履约保证金是否超过规定上限
+
+legal_basis:
+  - name: 《政府采购法实施条例》
+    article: 第四十八条
+    content: 履约保证金不得超过合同金额的10%
+
+risk_level: medium
+
+patterns:
+  - pattern: "履约保证金[^\\d]{0,20}(\\d+)%"
+    description: "检查履约保证金比例"
+  - pattern: "履约保证金[^\\d]{0,20}(\\d{1,2})%"
+    description: "检查百分比格式"
+
+keywords:
+  - 履约保证金
+  - 合同金额
+  - 保证金比例
+
+validation:
+  - type: numeric_range
+    field: percentage
+    min: 0
+    max: 10
+    error_message: "履约保证金超过合同金额10%的上限"
+
+suggestions:
+  - description: "将履约保证金比例调整为不超过合同金额的10%"
+    priority: high

@@ -30,7 +30,9 @@ class RiskLevel(Enum):
 @dataclass
 class PatternMatch:
     """模式匹配结果"""
-    pattern: str = ""
+    type: str = ""  # keyword/regex/composite
+    match: List[str] = field(default_factory=list)  # 匹配模式列表
+    exclude_context: List[str] = field(default_factory=list)  # 排除上下文
     matched_text: str = ""
     start_pos: int = 0
     end_pos: int = 0
@@ -40,14 +42,18 @@ class PatternMatch:
 @dataclass
 class RuleReference:
     """规则引用"""
-    regulation: str = ""
-    article: str = ""
-    description: str = ""
+    law: str = ""  # 法规名称
+    article: str = ""  # 条款编号
+    full_text: str = ""  # 法规原文
+    regulation: str = ""  # 兼容旧字段
+    description: str = ""  # 兼容旧字段
 
 
 @dataclass
 class RuleSuggestion:
     """规则建议"""
+    template: str = ""  # 修改建议模板
+    example: str = ""  # 修改示例
     type: str = ""  # remove/modify/add
     description: str = ""
     priority: int = 0
@@ -58,13 +64,18 @@ class Rule:
     """审查规则"""
     id: str = ""
     name: str = ""
-    category: str = ""
-    severity: str = ""
+    category: str = ""  # 歧视性/采购需求/评分标准/合同条款/认证证书
+    severity: str = ""  # critical/high/medium/low
     description: str = ""
-    patterns: List[str] = field(default_factory=list)
+    pattern: Optional[PatternMatch] = None  # YAML 格式使用 pattern
+    patterns: List[str] = field(default_factory=list)  # 兼容旧格式
     keywords: List[str] = field(default_factory=list)
-    references: List[RuleReference] = field(default_factory=list)
-    suggestions: List[RuleSuggestion] = field(default_factory=list)
+    reference: Optional[RuleReference] = None  # YAML 格式使用单数
+    references: List[RuleReference] = field(default_factory=list)  # 兼容旧格式
+    suggestion: Optional[RuleSuggestion] = None  # YAML 格式使用单数
+    suggestions: List[RuleSuggestion] = field(default_factory=list)  # 兼容旧格式
+    legal_basis: str = ""  # 法律依据
+    verification: Optional[dict] = None  # 验证配置
     enabled: bool = True
     confidence_threshold: float = 0.7
     tags: List[str] = field(default_factory=list)

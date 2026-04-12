@@ -1,0 +1,30 @@
+id: PROC-003
+name: 进口产品限制条款
+category: procurement
+severity: high
+description: 检查是否不合理限制进口产品
+
+legal_basis:
+  - name: 《政府采购法》
+    article: 第十条
+    content: "政府采购应当采购本国货物、工程和服务"
+
+risk_level: high
+
+patterns:
+  - pattern: "仅限|只能|必须是.*进口"
+    description: "检测进口产品强制要求"
+
+keywords:
+  - 进口产品
+  - 进口设备
+  - 原装进口
+  - 进口品牌
+
+validation:
+  - type: exclusion
+    error_message: "不得将进口产品作为唯一选择"
+
+suggestions:
+  - description: "允许国产和进口产品参与竞争"
+    priority: high

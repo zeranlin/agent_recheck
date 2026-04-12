@@ -1,0 +1,31 @@
+id: CERT-004
+name: 认证有效期检查
+category: certifications
+severity: low
+description: 检查认证证书是否在有效期内
+
+legal_basis:
+  - name: 《认证认可条例》
+    article: 相关规定
+    content: "认证证书应在有效期内使用"
+
+risk_level: low
+
+patterns:
+  - pattern: "有效期至|有效期至(\\d{4})年(\\d{1,2})月"
+    description: "检测认证有效期"
+
+keywords:
+  - 有效期
+  - 认证证书
+  - 到期
+
+validation:
+  - type: date_check
+    field: expiry_date
+    min_days: 30
+    error_message: "部分认证证书即将到期"
+
+suggestions:
+  - description: "确保所有认证证书在投标时仍在有效期内"
+    priority: low

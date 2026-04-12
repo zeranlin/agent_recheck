@@ -1,0 +1,31 @@
+id: SZ-002
+name: 深圳政采合同履约要求
+category: shenzhen
+severity: medium
+description: 检查深圳政府采购合同的履约要求
+
+legal_basis:
+  - name: 《深圳经济特区政府采购条例》
+    article: 第三十五条
+    content: "采购合同应当明确履约验收标准"
+
+risk_level: medium
+
+patterns:
+  - pattern: "履约验收|验收标准|验收程序"
+    description: "检测履约验收条款"
+
+keywords:
+  - 履约验收
+  - 验收标准
+  - 验收程序
+  - 验收报告
+
+validation:
+  - type: presence
+    required: true
+    error_message: "采购文件应当明确履约验收标准"
+
+suggestions:
+  - description: "在采购文件中明确履约验收标准和程序"
+    priority: medium

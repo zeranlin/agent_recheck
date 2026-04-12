@@ -1,0 +1,30 @@
+id: SZ-003
+name: 深圳政采绿色采购要求
+category: shenzhen
+severity: low
+description: 检查是否落实绿色采购政策
+
+legal_basis:
+  - name: 《深圳经济特区政府采购条例》
+    article: 相关规定
+    content: "政府采购应当优先采购节能环保产品"
+
+risk_level: low
+
+patterns:
+  - pattern: "节能环保|绿色采购|节能产品"
+    description: "检测绿色采购要求"
+
+keywords:
+  - 节能环保
+  - 绿色采购
+  - 节能产品
+  - 环保认证
+
+validation:
+  - type: presence_optional
+    error_message: "建议落实绿色采购政策"
+
+suggestions:
+  - description: "在采购需求中加入节能环保要求"
+    priority: low

@@ -26,7 +26,7 @@ class PathUtils:
     @staticmethod
     def get_rules_dir() -> Path:
         """获取规则目录"""
-        return PathUtils.get_project_root() / "rules"
+        return PathUtils.get_project_root() / "agent_recheck" / "rules"
 
     @staticmethod
     def ensure_dir(path: Union[str, Path]) -> Path:

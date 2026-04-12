@@ -1,0 +1,35 @@
+id: PROC-004
+name: 采购需求完整性检查
+category: procurement
+severity: medium
+description: 检查采购需求是否完整明确
+
+legal_basis:
+  - name: 《政府采购法实施条例》
+    article: 第十五条
+    content: "采购需求应当符合法律法规以及政府采购政策规定的技术、服务、安全等要求"
+
+risk_level: medium
+
+patterns:
+  - pattern: "采购需求|技术要求|服务要求"
+    description: "检测采购需求描述"
+
+keywords:
+  - 采购需求
+  - 技术要求
+  - 服务要求
+  - 规格参数
+
+validation:
+  - type: completeness
+    required_fields:
+      - 采购标的
+      - 技术参数
+      - 数量
+      - 交付时间
+    error_message: "采购需求描述不够完整"
+
+suggestions:
+  - description: "明确采购标的、技术参数、数量和交付时间"
+    priority: medium
