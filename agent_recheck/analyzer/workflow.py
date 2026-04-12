@@ -231,7 +231,13 @@ class ReviewWorkflow:
             return None
 
         if self.hybrid_engine is None:
-            self.hybrid_engine = HybridEngine(llm_enabled=True)
+            from .engine.hybrid_engine import HybridEngineConfig, AnalysisMode
+            config = HybridEngineConfig(
+                mode=AnalysisMode.HYBRID,
+                llm_enabled=True,
+                rules_enabled=True,
+            )
+            self.hybrid_engine = HybridEngine(config)
 
         try:
             return self.hybrid_engine.analyze(document)
@@ -240,7 +246,12 @@ class ReviewWorkflow:
 
     def _run_consistency_check(self, document: ParsedDocument) -> Any:
         """运行一致性检查"""
-        checker = ConsistencyChecker(document)
+        from .llm.client import LLMClient
+        # 从配置获取 LLM 是否启用
+        llm_config = LLMClient.from_config_file()
+        llm_enabled = self.config.enable_llm and llm_config.config.get("enabled", True)
+        
+        checker = ConsistencyChecker(document, llm_enabled=llm_enabled)
         return checker.check_all()
 
     def _combine_results(

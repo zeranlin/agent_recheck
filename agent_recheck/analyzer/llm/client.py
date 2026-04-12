@@ -20,8 +20,9 @@ class LLMClient:
     def __init__(self, config: Optional[dict] = None):
         self.config = config or {}
         self.model = self.config.get("model", "qwen3.5-27b")
-        self.api_base = self.config.get("api_base", "http://localhost:8000/v1")
-        self.timeout = self.config.get("timeout", 30)
+        self.api_base = self.config.get("api_base", "http://112.111.54.86:10011/v1")
+        self.api_key = self.config.get("api_key", "1212")
+        self.timeout = self.config.get("timeout", 60)
         self.max_retries = self.config.get("max_retries", 3)
 
         # 延迟初始化 client
@@ -35,12 +36,39 @@ class LLMClient:
                 from openai import AsyncOpenAI
                 self._client = AsyncOpenAI(
                     base_url=self.api_base,
+                    api_key=self.api_key,
                     timeout=self.timeout,
+                    max_retries=self.max_retries,
                 )
             except ImportError:
                 logger.warning("openai_package_not_installed")
                 return None
         return self._client
+
+    @classmethod
+    def from_config_file(cls, config_path: Optional[str] = None) -> "LLMClient":
+        """从配置文件加载"""
+        import yaml
+        import os
+        
+        if config_path is None:
+            # 查找默认配置
+            possible_paths = [
+                "agent_recheck/config/default.yaml",
+                "config/default.yaml",
+                os.path.expanduser("~/.agent_recheck/config.yaml"),
+            ]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    config_path = path
+                    break
+        
+        if config_path and os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            return cls(config.get("llm", {}))
+        
+        return cls({})
 
     async def is_available(self, timeout: float = 5) -> bool:
         """检查 LLM 服务是否可用"""

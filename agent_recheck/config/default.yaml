@@ -3,10 +3,12 @@
 # LLM 配置
 llm:
   model: "qwen3.5-27b"
-  api_base: "http://localhost:8000/v1"
-  timeout: 30
+  api_base: "http://112.111.54.86:10011/v1"
+  api_key: "1212"  # 认证密码
+  timeout: 60
   max_retries: 3
   fallback_enabled: true
+  enabled: true  # 是否启用 LLM
 
 # 规则引擎配置
 rules:

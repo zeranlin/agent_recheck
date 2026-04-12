@@ -116,16 +116,40 @@ class HybridAnalysisEngine:
         
         # 降级引擎
         self.fallback_engine = FallbackEngine()
-        self.fallback_engine.set_rules(self.rules)
+        # 将 Rule 对象转换为字典
+        rules_dict = self._rules_to_dict(self.rules)
+        self.fallback_engine.set_rules(rules_dict)
         
         # 降级管理器
         self.degradation_manager = None  # 延迟初始化
+
+    def _rules_to_dict(self, rules: list) -> list:
+        """将 Rule 对象列表转换为字典列表"""
+        result = []
+        for rule in rules:
+            if hasattr(rule, '__dict__'):
+                # dataclass 转换为字典
+                d = {
+                    'id': rule.id,
+                    'name': rule.name,
+                    'category': rule.category,
+                    'severity': rule.severity,
+                    'description': rule.description,
+                    'patterns': rule.patterns if hasattr(rule, 'patterns') else [],
+                    'keywords': rule.keywords if hasattr(rule, 'keywords') else [],
+                    'enabled': rule.enabled,
+                }
+                result.append(d)
+            else:
+                result.append(rule)
+        return result
     
     async def _get_llm_client(self):
         """获取 LLM 客户端（延迟初始化）"""
         if self.llm_client is None:
             from ..llm.client import LLMClient
-            self.llm_client = LLMClient()
+            # 从配置文件加载
+            self.llm_client = LLMClient.from_config_file()
             
             # 初始化降级管理器
             self.degradation_manager = GracefulDegradation(
@@ -222,7 +246,9 @@ class HybridAnalysisEngine:
         source_stats = {"rule": 0}
         
         for rule in self.rules:
-            if not rule.get("enabled", True):
+            # 处理 Rule 对象和字典两种情况
+            enabled = getattr(rule, 'enabled', True) if hasattr(rule, 'enabled') else rule.get("enabled", True) if isinstance(rule, dict) else True
+            if not enabled:
                 continue
             
             matched_issues = self._match_rule(rule, document)
@@ -296,15 +322,33 @@ class HybridAnalysisEngine:
         """降级分析（启发式）"""
         return self.fallback_engine.analyze(document)
     
-    def _match_rule(self, rule: Dict, document: Document) -> List[Issue]:
+    def _match_rule(self, rule, document: Document) -> List[Issue]:
         """匹配规则"""
         import re
+        from models.issue import IssueEvidence, IssueLocation, IssueSuggestion, IssueRule, IssueLevel
         
         issues = []
         
-        # 获取触发条件
-        trigger = rule.get("trigger", {})
-        keywords = trigger.get("match", [])
+        # 处理 Rule 对象和字典两种情况
+        if hasattr(rule, 'id'):
+            # Rule dataclass
+            rule_id = rule.id
+            rule_name = rule.name
+            rule_category = rule.category
+            rule_severity = rule.severity
+            keywords = rule.patterns if hasattr(rule, 'patterns') else []
+            rule_reference = getattr(rule, 'reference', None)
+            rule_suggestion = getattr(rule, 'suggestion', None)
+        else:
+            # dict
+            rule_id = rule.get("id", "")
+            rule_name = rule.get("name", "")
+            rule_category = rule.get("category", "other")
+            rule_severity = rule.get("level", "medium")
+            trigger = rule.get("trigger", {})
+            keywords = trigger.get("match", [])
+            rule_reference = rule.get("reference", [])
+            rule_suggestion = rule.get("suggestion", {})
         
         if not keywords:
             return issues
@@ -326,41 +370,59 @@ class HybridAnalysisEngine:
                 # 提取引用
                 quote = text[match.start():match.end() + 100]
                 
+                # 处理 severity
+                try:
+                    issue_level = IssueLevel(rule_severity) if rule_severity in ["high", "medium", "low", "info"] else IssueLevel.MEDIUM
+                except (ValueError, TypeError):
+                    issue_level = IssueLevel.MEDIUM
+                
                 issue = Issue(
-                    id=f"{rule['id']}_{match.start()}",
-                    type="rule_match",
-                    category=rule.get("category", "other"),
-                    level=rule.get("level", "medium"),
-                    title=rule.get("name", "发现问题"),
-                    evidence=None,  # 稍后填充
-                    rule=None,
-                    suggestion=None,
+                    issue_id=f"{rule_id}_{match.start()}",
+                    title=rule_name or "发现问题",
+                    description="",
+                    level=issue_level,
+                    category=rule_category or "other",
                     confidence=0.8,
                     source="rule",
                 )
                 
                 # 填充证据
-                from models.issue import IssueEvidence, IssueLocation, IssueSuggestion, IssueRule
-                
                 location = IssueLocation(line_start=0, line_end=0)
-                issue.evidence = IssueEvidence(
-                    quote=quote,
-                    location=location,
-                    highlight=keyword,
+                evidence = IssueEvidence(
+                    text=quote,
+                    type="matched",
+                    confidence=0.8,
                 )
+                issue.evidence = [evidence]
+                issue.location = location
                 
                 # 填充法规依据
-                ref = rule.get("reference", [])
-                ref_text = ref[0] if ref else ""
+                if hasattr(rule_reference, 'regulation'):
+                    ref_text = rule_reference.regulation
+                elif isinstance(rule_reference, list):
+                    ref_text = rule_reference[0] if rule_reference else ""
+                else:
+                    ref_text = str(rule_reference) if rule_reference else ""
+                
                 issue.rule = IssueRule(
-                    id=rule.get("id", ""),
-                    name=rule.get("name", ""),
-                    reference=ref_text,
+                    rule_id=rule_id,
+                    rule_name=rule_name,
+                    category=rule_category,
+                    severity=rule_severity,
                 )
                 
                 # 填充建议
-                suggestion_template = rule.get("suggestion", {}).get("template", "")
-                issue.suggestion = IssueSuggestion(content=suggestion_template)
+                if hasattr(rule_suggestion, 'template'):
+                    suggestion_content = rule_suggestion.template
+                elif isinstance(rule_suggestion, dict):
+                    suggestion_content = rule_suggestion.get("template", "")
+                else:
+                    suggestion_content = str(rule_suggestion) if rule_suggestion else ""
+                
+                issue.suggestion = IssueSuggestion(
+                    type="modify",
+                    suggested=suggestion_content,
+                )
                 
                 issues.append(issue)
         

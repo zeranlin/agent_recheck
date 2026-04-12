@@ -181,17 +181,17 @@ class FallbackEngine:
                     end = min(len(full_text), match.end() + 50)
                     context = full_text[start:end]
                     
+                    level_str = rule_config.get("level", "medium")
+                    level = IssueLevel(level_str) if level_str in ["high", "medium", "low", "info"] else IssueLevel.MEDIUM
+                    
                     issue = Issue(
-                        id=f"heuristic_{rule_name}_{match.start()}",
-                        type="heuristic",
-                        category=rule_config.get("category", "other"),
-                        level=rule_config.get("level", "medium"),
+                        issue_id=f"heuristic_{rule_name}_{match.start()}",
                         title=f"疑似违规: {rule_name}",
-                        evidence=None,  # 稍后填充
-                        rule=None,
-                        suggestion=rule_config.get("suggestion", ""),
-                        confidence=0.7,
+                        description=rule_config.get("suggestion", ""),
+                        level=level,
+                        category=rule_config.get("category", "other"),
                         source="fallback_heuristic",
+                        confidence=0.7,
                     )
                     
                     issues.append(issue)
@@ -213,17 +213,17 @@ class FallbackEngine:
                 
                 # 检查是否缺少实质性要求
                 if self._is_missing_substantiative(text):
+                    level_str = marker_config.get("level", "medium")
+                    level = IssueLevel(level_str) if level_str in ["high", "medium", "low", "info"] else IssueLevel.MEDIUM
+                    
                     issue = Issue(
-                        id=f"marker_{marker}_{match.start()}",
-                        type="marker",
-                        category="procurement",
-                        level=marker_config.get("level", "medium"),
+                        issue_id=f"marker_{marker}_{match.start()}",
                         title=f"{marker_config.get('name')} 缺少核心内容",
-                        evidence=None,
-                        rule=None,
-                        suggestion="请补充完整的实质性条款内容",
-                        confidence=0.6,
+                        description="请补充完整的实质性条款内容",
+                        level=level,
+                        category="procurement",
                         source="fallback_marker",
+                        confidence=0.6,
                     )
                     issues.append(issue)
         
@@ -245,16 +245,13 @@ class FallbackEngine:
         for item_name, pattern in required_items.items():
             if not re.search(pattern, full_text, re.IGNORECASE):
                 issue = Issue(
-                    id=f"missing_{item_name}",
-                    type="completeness",
-                    category="contract",
-                    level="medium",
+                    issue_id=f"missing_{item_name}",
                     title=f"缺少{item_name}条款",
-                    evidence=None,
-                    rule=None,
-                    suggestion=f"建议补充完整的{item_name}条款",
-                    confidence=0.5,
+                    description=f"建议补充完整的{item_name}条款",
+                    level=IssueLevel.MEDIUM,
+                    category="contract",
                     source="fallback_completeness",
+                    confidence=0.5,
                 )
                 issues.append(issue)
         

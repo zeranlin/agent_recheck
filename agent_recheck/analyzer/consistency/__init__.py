@@ -8,14 +8,32 @@
 2. 评分标准与分值匹配
 3. 表格数据与文字描述一致
 4. 时间节点逻辑正确
+5. LLM 辅助一致性检查
 """
 
-from typing import Any
+from typing import Any, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
+import asyncio
+
 from ..parser.base import ParsedDocument
 from ..parser.enhanced_table_parser import EnhancedTableParser, TableType
 from ..engine.scoring_parser import ScoringParser
+from ...utils.logging import get_logger
+
+logger = get_logger("consistency")
+
+# 导入 LLM 客户端
+_llm_client = None
+
+
+def get_llm_client():
+    """获取 LLM 客户端（延迟加载）"""
+    global _llm_client
+    if _llm_client is None:
+        from ..llm.client import LLMClient
+        _llm_client = LLMClient.from_config_file()
+    return _llm_client
 
 
 class ConsistencyType(Enum):
@@ -26,6 +44,7 @@ class ConsistencyType(Enum):
     TIMELINE = "timeline"                    # 时间节点逻辑
     AMOUNT = "amount"                         # 金额数字一致
     NAME = "name"                             # 名称一致
+    LLM_ANALYSIS = "llm_analysis"            # LLM 辅助分析
 
 
 class Severity(Enum):
@@ -45,6 +64,7 @@ class ConsistencyIssue:
     location: dict = field(default_factory=dict)  # {section, page, line}
     evidence: list[str] = field(default_factory=list)
     suggestion: str = ""
+    source: str = "rule"  # rule, llm
 
 
 @dataclass
@@ -72,10 +92,11 @@ class ConsistencyResult:
 class ConsistencyChecker:
     """一致性检查器"""
 
-    def __init__(self, document: ParsedDocument):
+    def __init__(self, document: ParsedDocument, llm_enabled: bool = True):
         self.document = document
         self.table_parser = EnhancedTableParser()
         self.scoring_parser = ScoringParser()
+        self.llm_enabled = llm_enabled
         self.result = ConsistencyResult(is_consistent=True)
 
     def check_all(self) -> ConsistencyResult:
@@ -86,20 +107,46 @@ class ConsistencyChecker:
         self._check_timeline_consistency()
         self._check_amount_consistency()
         self._check_name_consistency()
+        
+        # LLM 辅助一致性检查
+        if self.llm_enabled:
+            try:
+                self._check_llm_consistency()
+            except Exception as e:
+                logger.warning("llm_consistency_check_failed", error=str(e))
+        
+        return self.result
+
+    async def check_all_async(self) -> ConsistencyResult:
+        """异步执行所有一致性检查"""
+        self._check_qualification_consistency()
+        self._check_scoring_consistency()
+        self._check_table_text_consistency()
+        self._check_timeline_consistency()
+        self._check_amount_consistency()
+        self._check_name_consistency()
+        
+        # LLM 辅助一致性检查
+        if self.llm_enabled:
+            await self._check_llm_consistency_async()
+        
         return self.result
 
     def _check_qualification_consistency(self) -> None:
         """检查资质要求前后一致"""
         qualifications = []
         for section in self.document.sections:
-            for para in section.paragraphs:
-                text = para.text
-                if any(kw in text for kw in ["资质", "要求", "具备", "持有"]):
-                    qualifications.append({
-                        "text": text,
-                        "section": section.title,
-                        "location": para.metadata
-                    })
+            # 优先使用 section.content，如果为空则用 document.full_text
+            text = section.content if hasattr(section, 'content') else ""
+            if not text:
+                text = getattr(self.document, 'full_text', '')[:5000]  # 限制长度
+            
+            if any(kw in text for kw in ["资质", "要求", "具备", "持有"]):
+                qualifications.append({
+                    "text": text,
+                    "section": section.title if hasattr(section, 'title') else "",
+                    "location": {"section": section.title if hasattr(section, 'title') else ""}
+                })
 
         seen_qualifications = {}
         for qual in qualifications:
@@ -113,7 +160,7 @@ class ConsistencyChecker:
                             title="资质要求不一致",
                             description=f"'{key_phrase}' 在不同位置的描述存在差异",
                             location=qual["location"],
-                            evidence=[qual["text"], prev["text"]],
+                            evidence=[qual["text"][:200], prev["text"][:200]],
                             suggestion="确认资质要求是否为同一标准"
                         ))
                 else:
@@ -123,25 +170,42 @@ class ConsistencyChecker:
         """检查评分标准与分值匹配"""
         scoring_tables = []
         for table in self.document.tables:
-            if table.get("type") == TableType.SCORING or "评分" in table.get("title", ""):
+            # 处理 TableInfo dataclass 和 dict 两种情况
+            table_type = getattr(table, 'type', '') or table.get("type", "") if isinstance(table, dict) else ""
+            table_title = getattr(table, 'title', '') or table.get("title", "") if isinstance(table, dict) else ""
+            
+            if table_type == "scoring" or "评分" in table_title:
                 scoring_tables.append(table)
 
         for table in scoring_tables:
             total_weight = 0
-            for row in table.get("rows", []):
-                if row.get("is_header"):
-                    continue
-                weight = self._extract_number(row.get("cells", [{}])[-1].get("text", ""))
+            rows = getattr(table, 'rows', []) or table.get("rows", []) if isinstance(table, dict) else []
+            
+            for row in rows:
+                if isinstance(row, dict):
+                    if row.get("is_header"):
+                        continue
+                    cells = row.get("cells", [{}])
+                else:
+                    cells = getattr(row, 'cells', [{}])
+                
+                if cells:
+                    cell_text = cells[-1].get("text", "") if isinstance(cells[-1], dict) else getattr(cells[-1], 'text', "")
+                else:
+                    cell_text = ""
+                
+                weight = self._extract_number(cell_text)
                 total_weight += weight
 
             if total_weight > 0 and abs(total_weight - 100) > 0.5:
+                table_title = getattr(table, 'title', '') or table.get("title", "") if isinstance(table, dict) else ""
                 self.result.add_issue(ConsistencyIssue(
                     check_type=ConsistencyType.SCORING,
                     severity=Severity.ERROR if abs(total_weight - 100) > 5 else Severity.WARNING,
                     title="评分权重不等于100%",
                     description=f"评分表中各项权重之和为 {total_weight}%，不等于100%",
-                    location=table.get("metadata", {}),
-                    evidence=[str(table.get("title", "")), f"总和: {total_weight}%"],
+                    location={"title": table_title},
+                    evidence=[str(table_title), f"总和: {total_weight}%"],
                     suggestion="调整各评分项权重使其总和为100%"
                 ))
 
@@ -149,47 +213,74 @@ class ConsistencyChecker:
         """检查表格数据与文字描述一致"""
         table_titles = set()
         for table in self.document.tables:
-            title = table.get("title", "")
+            # 处理 TableInfo dataclass 和 dict 两种情况
+            if isinstance(table, dict):
+                title = table.get("title", "")
+            else:
+                title = getattr(table, 'title', '') or ""
             if title:
                 table_titles.add(title)
 
         for section in self.document.sections:
-            for para in section.paragraphs:
-                para_text = para.text
-                for title in table_titles:
-                    if title in para_text and "见下表" in para_text:
-                        related_tables = [t for t in self.document.tables if t.get("title") == title]
-                        if not related_tables:
-                            self.result.add_issue(ConsistencyIssue(
-                                check_type=ConsistencyType.TABLE_TEXT,
-                                severity=Severity.WARNING,
-                                title="表格引用但未找到",
-                                description=f"文档引用表格 '{title}'，但未找到该表格",
-                                location=para.metadata,
-                                evidence=[para_text],
-                                suggestion="检查表格是否存在或编号是否正确"
-                            ))
+            # 使用 section.content 而不是 section.paragraphs
+            text = section.content if hasattr(section, 'content') else ""
+            if not text:
+                continue
+                
+            for title in table_titles:
+                if title in text and "见下表" in text:
+                    related_tables = []
+                    for t in self.document.tables:
+                        if isinstance(t, dict):
+                            t_title = t.get("title", "")
+                        else:
+                            t_title = getattr(t, 'title', '') or ""
+                        if t_title == title:
+                            related_tables.append(t)
+                    
+                    if not related_tables:
+                        self.result.add_issue(ConsistencyIssue(
+                            check_type=ConsistencyType.TABLE_TEXT,
+                            severity=Severity.WARNING,
+                            title="表格引用但未找到",
+                            description=f"文档引用表格 '{title}'，但未找到该表格",
+                            location={"section": section.title if hasattr(section, 'title') else ""},
+                            evidence=[text[:200]],
+                            suggestion="检查表格是否存在或编号是否正确"
+                        ))
 
     def _check_timeline_consistency(self) -> None:
         """检查时间节点逻辑正确"""
         dates = []
         for section in self.document.sections:
-            for para in section.paragraphs:
-                found_dates = self._extract_dates(para.text)
-                for date in found_dates:
-                    dates.append({
-                        "date": date,
-                        "context": para.text[:100],
-                        "section": section.title
-                    })
+            text = section.content if hasattr(section, 'content') else ""
+            if not text:
+                continue
+            
+            found_dates = self._extract_dates(text)
+            for date in found_dates:
+                dates.append({
+                    "date": date,
+                    "context": text[:100],
+                    "section": section.title if hasattr(section, 'title') else ""
+                })
 
-        dates.sort(key=lambda x: x["date"])
+        # 按日期排序（需要将日期字符串转为可比较格式）
+        def date_sort_key(x):
+            import re
+            d = x["date"]
+            match = re.search(r"(\d{4})[年/](\d{1,2})[月/](\d{1,2})", d)
+            if match:
+                return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+            return (0, 0, 0)
+        
+        dates.sort(key=date_sort_key)
 
         for i in range(len(dates) - 1):
             current = dates[i]
             next_item = dates[i + 1]
             if "截止" in current["context"] or "截止" in next_item["context"]:
-                if current["date"] > next_item["date"]:
+                if date_sort_key(current) > date_sort_key(next_item):
                     self.result.add_issue(ConsistencyIssue(
                         check_type=ConsistencyType.TIMELINE,
                         severity=Severity.ERROR,
@@ -204,41 +295,47 @@ class ConsistencyChecker:
         """检查金额数字一致"""
         amounts = {}
         for section in self.document.sections:
-            for para in section.paragraphs:
-                found_amounts = self._extract_amounts(para.text)
-                for amount, context in found_amounts:
-                    if amount in amounts:
-                        if not self._compare_amount_context(amount, context, amounts[amount]["context"]):
-                            self.result.add_issue(ConsistencyIssue(
-                                check_type=ConsistencyType.AMOUNT,
-                                severity=Severity.WARNING,
-                                title="金额描述不一致",
-                                description=f"金额 {amount} 在不同位置描述不一致",
-                                evidence=[context, amounts[amount]["context"]],
-                                suggestion="确认金额是否为同一笔款项"
-                            ))
-                    else:
-                        amounts[amount] = {"context": context, "section": section.title}
+            text = section.content if hasattr(section, 'content') else ""
+            if not text:
+                continue
+                
+            found_amounts = self._extract_amounts(text)
+            for amount, context in found_amounts:
+                if amount in amounts:
+                    if not self._compare_amount_context(amount, context, amounts[amount]["context"]):
+                        self.result.add_issue(ConsistencyIssue(
+                            check_type=ConsistencyType.AMOUNT,
+                            severity=Severity.WARNING,
+                            title="金额描述不一致",
+                            description=f"金额 {amount} 在不同位置描述不一致",
+                            evidence=[context[:100], amounts[amount]["context"][:100]],
+                            suggestion="确认金额是否为同一笔款项"
+                        ))
+                else:
+                    amounts[amount] = {"context": context, "section": section.title if hasattr(section, 'title') else ""}
 
     def _check_name_consistency(self) -> None:
         """检查名称一致"""
         names = {}
         for section in self.document.sections:
-            for para in section.paragraphs:
-                found_names = self._extract_project_names(para.text)
-                for name in found_names:
-                    if name in names:
-                        if not self._fuzzy_match(name, names[name]):
-                            self.result.add_issue(ConsistencyIssue(
-                                check_type=ConsistencyType.NAME,
-                                severity=Severity.INFO,
-                                title="项目名称可能不一致",
-                                description=f"项目名称可能有多种写法",
-                                evidence=[name, names[name]],
-                                suggestion="统一项目名称写法"
-                            ))
-                    else:
-                        names[name] = name
+            text = section.content if hasattr(section, 'content') else ""
+            if not text:
+                continue
+                
+            found_names = self._extract_project_names(text)
+            for name in found_names:
+                if name in names:
+                    if not self._fuzzy_match(name, names[name]):
+                        self.result.add_issue(ConsistencyIssue(
+                            check_type=ConsistencyType.NAME,
+                            severity=Severity.INFO,
+                            title="项目名称可能不一致",
+                            description=f"项目名称可能有多种写法",
+                            evidence=[name, names[name]],
+                            suggestion="统一项目名称写法"
+                        ))
+                else:
+                    names[name] = name
 
     def _extract_key_phrases(self, text: str) -> list[str]:
         """提取关键短语"""
@@ -260,6 +357,12 @@ class ConsistencyChecker:
         text2 = q2["text"].lower()
         similarity = self._calculate_similarity(text1, text2)
         return similarity > 0.8
+
+    def _compare_amount_context(self, amount: str, context1: str, context2: str) -> bool:
+        """比较两个金额上下文是否一致"""
+        # 检查上下文是否包含相同的描述
+        # 简单检查：如果两个上下文都提到相同的金额类型，则认为一致
+        return context1 == context2
 
     def _calculate_similarity(self, s1: str, s2: str) -> float:
         """计算文本相似度"""
@@ -316,3 +419,140 @@ class ConsistencyChecker:
         pattern = r"《([^》]+)》|([^\s，,。]{5,20}项目)"
         matches = re.findall(pattern, text)
         return [m[0] or m[1] for m in matches if m[0] or m[1]]
+
+    def _check_llm_consistency(self) -> None:
+        """使用 LLM 进行一致性检查（同步包装）"""
+        try:
+            # 直接创建新的事件循环
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(self._check_llm_consistency_async())
+            finally:
+                loop.close()
+        except Exception as e:
+            logger.warning("llm_consistency_check_error", error=str(e))
+
+    async def _check_llm_consistency_async(self) -> None:
+        """使用 LLM 进行一致性检查（异步）"""
+        try:
+            client = get_llm_client()
+            if not await client.is_available():
+                logger.warning("llm_not_available_for_consistency")
+                return
+
+            # 构建一致性检查提示词
+            prompt = self._build_consistency_prompt()
+            
+            response = await client.client.chat.completions.create(
+                model=client.model,
+                messages=[
+                    {"role": "system", "content": "你是一个专业的政府采购招投标文件合规审查专家，专注于发现文档内部的一致性问题。"},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+                max_tokens=3000,
+            )
+            
+            result_text = response.choices[0].message.content
+            self._parse_llm_consistency_result(result_text)
+            
+        except Exception as e:
+            logger.warning("llm_consistency_check_failed", error=str(e))
+
+    def _build_consistency_prompt(self) -> str:
+        """构建一致性检查提示词"""
+        # 收集关键信息
+        sections_text = []
+        for section in self.document.sections[:20]:  # 限制数量
+            section_content = section.content if hasattr(section, 'content') else getattr(section, 'text', '')
+            section_title = section.title if hasattr(section, 'title') else ''
+            sections_text.append(f"【{section_title}】\n{section_content[:500]}")
+        
+        tables_text = []
+        for i, table in enumerate(self.document.tables[:10]):
+            if isinstance(table, dict):
+                table_title = table.get('title', '')
+                table_content = table.get('content', '')
+            else:
+                table_title = getattr(table, 'title', '') or ''
+                table_content = getattr(table, 'content', '') or ''
+            tables_text.append(f"【表格{i+1}】{table_title}\n{table_content[:300]}")
+        
+        prompt = f"""请分析以下招投标文件，找出可能存在的一致性问题：
+
+## 文档段落：
+{chr(10).join(sections_text)}
+
+## 表格：
+{chr(10).join(tables_text)}
+
+请重点检查以下类型的一致性问题：
+1. 资质要求前后矛盾（如前面要求ISO认证，后面又说可选）
+2. 评分标准分值不匹配（如说满分100分但各项加起来超过100）
+3. 时间节点逻辑错误（如截止日期早于开始日期）
+4. 金额数字不一致（如大写金额与小写金额不符）
+5. 表格与文字描述矛盾（如说"见下表"但表格不存在）
+
+请以JSON格式返回发现的问题，格式如下：
+{{
+  "issues": [
+    {{
+      "type": "qualification|scoring|timeline|amount|table_text",
+      "severity": "error|warning|info",
+      "title": "问题标题",
+      "description": "详细描述",
+      "location": {{"section": "相关章节"}},
+      "evidence": ["证据1", "证据2"],
+      "suggestion": "修改建议"
+    }}
+  ]
+}}
+如果没有问题，返回空的issues数组。"""
+        return prompt
+
+    def _parse_llm_consistency_result(self, result_text: str) -> None:
+        """解析 LLM 返回的一致性检查结果"""
+        import json
+        import re
+        
+        try:
+            # 尝试提取 JSON
+            json_match = re.search(r'\{[\s\S]*\}|\[[\s\S]*\]', result_text)
+            if not json_match:
+                logger.warning("llm_consistency_response_not_json")
+                return
+            
+            data = json.loads(json_match.group())
+            issues_list = data.get("issues", [])
+            
+            for item in issues_list:
+                try:
+                    check_type_str = item.get("type", "llm_analysis")
+                    try:
+                        check_type = ConsistencyType(check_type_str)
+                    except ValueError:
+                        check_type = ConsistencyType.LLM_ANALYSIS
+                    
+                    severity_str = item.get("severity", "warning")
+                    try:
+                        severity = Severity(severity_str)
+                    except ValueError:
+                        severity = Severity.WARNING
+                    
+                    issue = ConsistencyIssue(
+                        check_type=check_type,
+                        severity=severity,
+                        title=item.get("title", "一致性问题"),
+                        description=item.get("description", ""),
+                        location=item.get("location", {}),
+                        evidence=item.get("evidence", []),
+                        suggestion=item.get("suggestion", ""),
+                        source="llm",
+                    )
+                    self.result.add_issue(issue)
+                except Exception as e:
+                    logger.warning("llm_issue_parse_error", error=str(e))
+                    
+        except json.JSONDecodeError:
+            logger.warning("llm_consistency_json_decode_error")
