@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 地域限制
+
+id: QUAL-011
+name: 地域限制要求违规
+category: qualification
+level: critical
+description: |
+  要求投标人在特定地域（如项目所在地、市内、省内）
+  设有分支机构或服务机构，构成地域歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "深圳市内"
+    - "深圳市"
+    - "深圳"
+    - "项目所在地"
+    - "当地"
+    - "本地"
+
+verification:
+  check_type: contextual
+  require_context:
+    - "服务机构"
+    - "分支机构"
+    - "办公场所"
+    - "常驻"
+    - "设有"
+  # 违规模式：要求在特定地域有机构
+  invalid_context:
+    - "必须在.*设有"
+    - "承诺.*后设有"
+    - "中标后.*设有"
+
+reference:
+  - name: "政府采购法"
+    article: "第三条"
+    note: "政府采购应当遵循公开透明、公平竞争、公正和诚实信用原则"
+  - name: "优化营商环境条例"
+    article: "第十五条"
+    note: "不得违规设置不合理条件限制或排斥潜在投标人"
+
+suggestion:
+  template: "删除地域限制要求，允许异地投标人在中标后设立服务机构"

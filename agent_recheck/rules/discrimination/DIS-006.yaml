@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 指定特定检测机构
+
+id: DIS-006
+name: 指定特定检测机构歧视
+category: discrimination
+level: critical
+description: |
+  要求投标文件由特定检测机构出具，
+  构成对其他具有同等资质检测机构的歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "由.*检测机构出具"
+    - "须由.*检测"
+    - "指定.*检测机构"
+    - "特定.*检测机构"
+    - "仅接受.*检测"
+    - "必须由.*检测"
+
+verification:
+  check_type: contextual
+  # 违规模式：指定具体检测机构名称
+  require_context:
+    - "检测报告"
+    - "检测证明"
+    - "检验报告"
+  invalid_context:
+    - "由.*出具"
+    - "须.*出具"
+
+reference:
+  - name: "检验检测机构资质认定管理办法"
+    article: "相关规定"
+    note: "检测报告应由具有相应资质的机构出具，不应指定特定机构"
+  - name: "政府采购法"
+    article: "第三条"
+    note: "不得以不合理条件限制或排斥潜在投标人"
+
+suggestion:
+  template: "删除指定特定检测机构的要求，改为'具有CMA或CNAS资质的检测机构出具的检测报告'"

@@ -1,0 +1,16 @@
+rule_id: "CONTRACT-005"
+name: "合同金额支付比例"
+category: "contract"
+description: "预付款比例建议为合同金额的10%-30%，不宜过高"
+trigger:
+  type: "regex"
+  match:
+    - "支付合同金额.*%"
+    - "预付.*%"
+    - "合同金额.*预付"
+severity: "medium"
+action:
+  type: "suggest"
+  message: "建议调整预付款为合同金额的10%-30%"
+examples:
+  - "建议调整为：采购人支付合同金额10%"

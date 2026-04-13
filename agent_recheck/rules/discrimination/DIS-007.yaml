@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 品牌型号歧视
+
+id: DIS-007
+name: 限定特定品牌或型号
+category: discrimination
+level: critical
+description: |
+  采购需求中限定特定品牌、型号或包含广告宣传语，
+  构成对其他品牌供应商的歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "参照.*品牌"
+    - "参考.*品牌"
+    - "如.*品牌"
+    - "推荐.*品牌"
+    - "优选.*品牌"
+    - "建议.*品牌"
+    - "包括.*型号"
+    - "参照.*型号"
+    - "参考.*型号"
+
+verification:
+  check_type: contextual
+  invalid_patterns:
+    - "必须是.*品牌"
+    - "限.*品牌"
+    - "仅限.*品牌"
+    - "指定.*品牌"
+
+reference:
+  - name: "政府采购法"
+    article: "第三条"
+    note: "不得以不合理的条件限制或排斥潜在投标人"
+  - name: "政府采购货物和服务招标投标管理办法"
+    article: "第六十五条"
+    note: "招标文件不得要求或者标明特定的投标人或者产品"
+
+suggestion:
+  template: "删除品牌或型号限定，改为功能性描述"

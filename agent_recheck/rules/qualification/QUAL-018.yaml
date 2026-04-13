@@ -1,0 +1,17 @@
+rule_id: "QUAL-018"
+name: "检测报告与检测标准对应要求"
+category: "qualification"
+description: "CMA标识的检测报告需对应设置检测标准，应逐一补充检测对应的检测标准"
+trigger:
+  type: "regex"
+  match:
+    - "CMA.*报告.*检测标准"
+    - "检测方法.*对应"
+    - ".*检测.*标准.*对应"
+severity: "medium"
+action:
+  type: "suggest"
+  message: "设置CMA标识的报告需对应设置该检测的检测标准，请逐一补充"
+examples:
+  - "若检测报告体现CMA，检测标准需对应设置"
+  - "检测方法有对应的检测标准"

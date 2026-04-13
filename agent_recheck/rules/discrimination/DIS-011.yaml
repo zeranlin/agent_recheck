@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 证书颁发机构歧视
+
+id: DIS-011
+name: 证书要求限定特定颁发机构
+category: discrimination
+level: high
+description: |
+  证书要求限定由"行政机关或事业单位"颁发，
+  排斥由行业协会等其他合法机构颁发的同等效力证书。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "行政机关或事业单位颁发"
+    - "政府部门颁发"
+    - "国家机关颁发"
+    - "政府机构颁发"
+
+verification:
+  check_type: negative
+  invalid_context:
+    - "荣誉"
+    - "证书"
+    - "认证"
+
+reference:
+  - name: "政府采购法实施条例"
+    article: "第二十条"
+    note: "不得以不合理条件限制或者排斥潜在供应商"
+
+suggestion:
+  template: "删除限定颁发机构的表述，接受同等效力的其他合法机构颁发的证书"

@@ -1,0 +1,16 @@
+rule_id: "QUAL-019"
+name: "社保证明豁免条件"
+category: "qualification"
+description: "投标人成立不足三个月时，应允许以承诺函代替社保证明"
+trigger:
+  type: "regex"
+  match:
+    - "投标人成立不足.*社保证明"
+    - "成立不足.*无需.*社保"
+    - "承诺函.*自有员工"
+severity: "low"
+action:
+  type: "suggest"
+  message: "对于成立不足三个月的投标人，应提供承诺函说明员工为自有员工，无需提供社保证明"
+examples:
+  - "若投标人成立不足三个月的，无需提供社保证明，以投标人营业执照成立时间为准"

@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 特定金额业绩要求
+
+id: DIS-010
+name: 不得将特定金额合同业绩作为评审因素
+category: discrimination
+level: high
+description: |
+  不得将特定金额的合同业绩作为供应商的资格条件或评审因素，
+  构成对中小企业的歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "合同业绩"
+    - "项目业绩"
+    - "合同金额"
+    - "单笔合同"
+
+verification:
+  check_type: contextual
+  invalid_patterns:
+    - "\\d+万.*合同"
+    - "\\d+万元.*业绩"
+    - "合同金额.*以上"
+    - "业绩.*\\d+万"
+
+reference:
+  - name: "深圳市财政局招标文件编制指引"
+    article: "2020年版"
+    note: "不得将特定金额的合同业绩作为供应商的资格条件或评审因素"
+
+suggestion:
+  template: "删除特定金额要求，改为通用的业绩要求（如同类项目经验）"

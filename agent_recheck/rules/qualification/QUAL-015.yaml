@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 社保缴纳年限要求
+
+id: QUAL-015
+name: 社保缴纳年限变相限制经营年限
+category: qualification
+level: high
+description: |
+  对社保缴纳时限做出要求，变相对投标供应商的经营年限进行了限制，
+  违反《政府采购促进中小企业发展管理办法》。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "连续缴纳"
+    - "近.*月"
+    - "近.*年"
+    - "缴交.*年限"
+    - "社保.*年限"
+
+verification:
+  check_type: contextual
+  invalid_patterns:
+    - "连续.*月.*社保"
+    - "近.*月.*社保"
+
+reference:
+  - name: "政府采购促进中小企业发展管理办法"
+    article: "第五条"
+    note: "不得在企业股权结构、经营年限等方面对中小企业实行差别待遇或者歧视待遇"
+
+suggestion:
+  template: "删除社保缴纳年限要求，改为要求提供自有员工承诺函"

@@ -1,0 +1,16 @@
+rule_id: "SCOR-009"
+name: "认证证书官网查询要求"
+category: "scoring"
+description: "认证证书应可官网查询，需提供证书官网或全国认证认可信息公共服务平台的查询记录"
+trigger:
+  type: "regex"
+  match:
+    - "认证证书.*官网.*查询"
+    - "证书查询.*记录"
+    - "认证认可.*信息平台"
+severity: "medium"
+action:
+  type: "suggest"
+  message: "要求提供认证证书官网查询记录，认证证书在公开渠道无法查询的需提供颁发机构证明"
+examples:
+  - "要求提供有效的认证证书作为得分依据，及出具证书官网或全国认证认可信息公共服务平台的证书查询记录"

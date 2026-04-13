@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 使用国外标准排斥国产
+
+id: DIS-013
+name: 使用国外标准排斥国产产品
+category: discrimination
+level: high
+description: |
+  采购国产产品却要求符合国外标准或认证，
+  构成对国产产品的歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "EN\\s*\\d+"
+    - "IEC\\s*\\d+"
+    - "ISO\\s*\\d+"
+    - "欧盟"
+    - "UL认证"
+    - "CE认证"
+
+verification:
+  check_type: contextual
+  require_context:
+    - "拒绝进口"
+    - "不接受进口"
+    - "国产"
+
+reference:
+  - name: "政府采购法"
+    article: "第十条"
+    note: "政府采购应当采购本国货物、工程和服务"
+
+suggestion:
+  template: "将国外标准替换为相应国内标准，或明确国产产品也可满足"

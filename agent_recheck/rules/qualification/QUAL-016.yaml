@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 准入类资格证书限制
+
+id: QUAL-016
+name: 禁止将准入类资格证书作为评分项
+category: qualification
+level: high
+description: |
+  特种作业证等准入类资格证书属于国家准入要求，
+  不可作为政府采购评审因素。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "特种作业"
+    - "特种作业证"
+    - "作业资格证"
+    - "从业资格证"
+    - "准入类"
+
+verification:
+  check_type: negative
+  invalid_context:
+    - "评审"
+    - "得分"
+    - "加分"
+
+reference:
+  - name: "深圳市财政局政府采购易发问题清单"
+    article: "2023年版"
+    note: "准入类资格证书不可作为评审因素"
+
+suggestion:
+  template: "删除准入类资格证书作为评审因素的条款"

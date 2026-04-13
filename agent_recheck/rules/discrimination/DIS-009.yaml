@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 规模条件限制
+
+id: DIS-009
+name: 禁止设置供应商规模条件作为评审因素
+category: discrimination
+level: critical
+description: |
+  注册资本金、资产总额、营业收入、从业人员（公司人员规模）、
+  利润、纳税额等规模条件不得作为评审因素或中标条件。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "注册资本"
+    - "资产总额"
+    - "营业收入"
+    - "从业人员"
+    - "人员规模"
+    - "企业规模"
+    - "公司规模"
+    - "纳税额"
+    - "利润"
+
+verification:
+  check_type: negative
+  invalid_context:
+    - "评审"
+    - "加分"
+    - "得分"
+    - "中标条件"
+
+reference:
+  - name: "政府采购货物和服务招标投标管理办法"
+    article: "第十七条"
+    note: "采购人不得将投标人的注册资本、资产总额、营业收入、从业人员等规模条件作为资格要求或者评审因素"
+  - name: "政府采购促进中小企业发展管理办法"
+    article: "相关规定"
+    note: "不得以规模条件限制中小企业参与政府采购"
+
+suggestion:
+  template: "删除注册资本金、资产总额、营业收入、从业人员等规模条件作为评审因素"

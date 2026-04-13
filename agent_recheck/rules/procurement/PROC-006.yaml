@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+# 采购程序规则 - 质量保证金收取
+
+id: PROC-006
+name: 质量保证金收取无法律依据
+category: procurement
+level: medium
+description: |
+  质量保证金在政府采购法律法规中无相关依据，
+  不得收取没有法律法规依据的保证金。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "质量保证金"
+    - "质保金"
+
+verification:
+  check_type: negative
+  # 检查是否作为收取条款
+
+reference:
+  - name: "财政部关于促进政府采购公平竞争优化营商环境的通知"
+    article: "相关规定"
+    note: "采购人、采购代理机构不得收取没有法律法规依据的保证金"
+
+suggestion:
+  template: "删除质量保证金相关条款"

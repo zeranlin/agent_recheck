@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+# 采购程序规则 - 样品检测违规
+
+id: PROC-005
+name: 不得以样品检测改变评审结果
+category: procurement
+level: critical
+description: |
+  采购人或采购代理机构不得通过对样品进行检测、
+  对供应商进行考察等方式改变评审结果。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "样品检测"
+    - "检测样品"
+    - "考察.*供应商"
+    - "现场考察"
+
+verification:
+  check_type: negative
+  # 检查是否与改变评审结果关联
+  invalid_context:
+    - "改变评审"
+    - "影响评审"
+    - "作为评审依据"
+    - "评审得分"
+
+reference:
+  - name: "政府采购法实施条例"
+    article: "第四十四条"
+    note: "采购人或者采购代理机构不得通过对样品进行检测、对供应商进行考察等方式改变评审结果"
+
+suggestion:
+  template: "删除样品检测作为评审依据的条款"

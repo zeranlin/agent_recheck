@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 检测机构资质要求
+
+id: QUAL-012
+name: 检测报告资质要求不明确
+category: qualification
+level: high
+description: |
+  要求提供"第三方权威检测机构"报告但未明确资质要求，
+  应明确要求CMA或CNAS标识的检测报告。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "第三方权威检测机构"
+    - "第三方检测机构"
+    - "权威检测机构"
+    - "第三方检测报告"
+    - "权威机构检测"
+
+verification:
+  check_type: negative
+  # 检查是否明确资质要求
+  require_keywords:
+    - "CMA"
+    - "CNAS"
+    - "计量认证"
+    - "认可"
+  ambiguous_terms:
+    - "第三方"
+    - "权威"
+
+reference:
+  - name: "检验检测机构资质认定管理办法"
+    article: "第一章"
+    note: "检验检测机构应当依法取得资质认定"
+  - name: "认证认可条例"
+    article: "相关条款"
+    note: "检测报告应具有相应资质标识"
+
+suggestion:
+  template: "将'第三方权威检测机构'明确为'具有CMA或CNAS标识的检测机构'"

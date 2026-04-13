@@ -1,0 +1,45 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 强制性认证分类错误
+
+id: QUAL-013
+name: 强制性认证未正确分类
+category: qualification
+level: critical
+description: |
+  强制性认证（如CCC认证）应设置为资格要求或实质性要求，
+  而非作为评审项进行分值评分。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "CCC"
+    - "3C认证"
+    - "强制性产品认证"
+    - "CCC认证"
+
+verification:
+  check_type: contextual
+  # 检查是否作为评审项
+  invalid_context:
+    - "评审"
+    - "得分"
+    - "加分"
+    - "评分"
+  # 应在的位置
+  valid_context:
+    - "资格要求"
+    - "实质性要求"
+    - "基本要求"
+
+reference:
+  - name: "政府采购法"
+    article: "第二十二条"
+    note: "采购需求应当符合法律法规规定"
+  - name: "强制性产品认证管理规定"
+    article: "相关规定"
+    note: "强制性认证产品必须取得认证后方可出厂、销售"
+
+suggestion:
+  template: "将CCC等强制性认证从评审项移至资格要求或实质性要求"

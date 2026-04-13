@@ -1,0 +1,17 @@
+rule_id: "QUAL-017"
+name: "检测报告单一来源歧视"
+category: "qualification"
+description: "禁止要求同一份检测报告必须包含全部技术指标，这属于歧视性条款"
+trigger:
+  type: "regex"
+  match:
+    - "同一份.*检测报告.*全部"
+    - "一份报告.*所有.*指标"
+    - "同一份.*报告.*涵盖.*全部"
+severity: "high"
+action:
+  type: "warn"
+  message: "禁止要求同一份检测报告必须包含全部内容，应允许提供多份报告"
+examples:
+  - "同一份检测报告需包含上述全部内容，有倾向性嫌疑"
+  - "一份报告涵盖所有技术指标"

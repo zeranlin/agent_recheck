@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 行业限定歧视
+
+id: DIS-008
+name: 限定特定行业业绩要求
+category: discrimination
+level: high
+description: |
+  业绩要求限定特定行业（如"楼宇信息化建设"），
+  构成对其他行业供应商的歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "楼宇信息化建设"
+    - "教育信息化建设"
+    - "医疗信息化建设"
+    - "政务信息化建设"
+    - "政府信息化建设"
+
+verification:
+  check_type: contextual
+  require_context:
+    - "业绩"
+    - "案例"
+    - "项目经验"
+  invalid_patterns:
+    - "限于.*行业"
+    - "限定.*行业"
+    - "仅限.*业绩"
+
+reference:
+  - name: "政府采购法"
+    article: "第三条"
+    note: "政府采购应当遵循公平竞争原则"
+  - name: "优化营商环境条例"
+    article: "相关规定"
+    note: "不得设置不合理条件限制潜在投标人"
+
+suggestion:
+  template: "将行业限定业绩要求修改为通用业绩要求，如'信息化建设类项目'"

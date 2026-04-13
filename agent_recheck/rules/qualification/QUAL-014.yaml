@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 社保年限歧视
+
+id: QUAL-014
+name: 禁止以社保年限作为评审因素
+category: qualification
+level: high
+description: |
+  以企业经营年限或社保缴交年限作为评审因素，
+  违反《政府采购促进中小企业发展管理办法》，构成对中小企业歧视。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "社保缴交"
+    - "社保年限"
+    - "连续缴纳"
+    - "社保.*年"
+    - "缴交.*年"
+
+verification:
+  check_type: contextual
+  invalid_context:
+    - "评审"
+    - "得分"
+    - "加分"
+
+reference:
+  - name: "政府采购促进中小企业发展管理办法"
+    article: "相关规定"
+    note: "以企业经营年限作为评审因素属于差别或歧视待遇情形"
+
+suggestion:
+  template: "将社保年限要求修改为提供自有员工承诺函"

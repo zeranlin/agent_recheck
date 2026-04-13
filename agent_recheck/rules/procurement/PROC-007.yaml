@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+# 采购要求规则 - 检测报告数量限制
+
+id: PROC-007
+name: 检测报告数量不得超过合理限制
+category: procurement
+level: high
+description: |
+  不得简单追求检验检测报告数量，增加供应商投标成本。
+  建议检测报告数量控制在15项以内，同类产品同种材料不建议重复要求。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "检测报告"
+    - "检验检测报告"
+    - "CMA"
+    - "CNAS"
+
+verification:
+  check_type: contextual
+  # 检查数量是否过多
+  require_context:
+    - "数量"
+    - "项"
+    - "份"
+
+reference:
+  - name: "深圳市财政局招标文件编制指引"
+    article: "2021年版"
+    note: "不得简单追求检验检测报告数量，检测报告建议控制在15项以内"
+
+suggestion:
+  template: "减少检测报告数量要求，同类产品同种材料只要求一项检测报告"

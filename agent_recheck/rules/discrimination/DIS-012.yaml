@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+# 歧视性要求规则 - 变相经营年限限制
+
+id: DIS-012
+name: 通过资质变相要求经营年限
+category: discrimination
+level: critical
+description: |
+  某些资质证书（如5A认证、信息安全管理体系认证等）
+  需要一定经营年限才能获得，变相限制新设立企业。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "5A"
+    - "AAA"
+    - "信息系统集成"
+    - "信息技术服务管理"
+    - "信息安全管理体系"
+    - "高新企业"
+
+verification:
+  check_type: contextual
+  invalid_context:
+    - "认证"
+    - "资质"
+    - "证书"
+
+reference:
+  - name: "政府采购促进中小企业发展管理办法"
+    article: "第五条"
+    note: "不得在企业股权结构、经营年限等方面对中小企业实行差别待遇或者歧视待遇"
+
+suggestion:
+  template: "删除需要特定经营年限才能获得的资质证书要求"
