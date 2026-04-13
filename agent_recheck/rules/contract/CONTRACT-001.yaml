@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+# 合同条款规则 - 付款期限
+
+id: CONTRACT-001
+name: 付款期限不符合规定
+category: contract
+level: high
+description: |
+  合同付款期限超过法规要求的10个工作日，
+  或未按深圳市财政局要求设置付款条款。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "付款"
+    - "支付"
+
+verification:
+  check_type: contextual
+  # 检查付款期限
+  check_patterns:
+    - "工作日"
+    - "付款条件"
+    - "收到发票"
+
+reference:
+  - name: "深圳市财政局"
+    article: "深财购〔2024〕32号"
+    note: "原则上应当自收到发票后10个工作日内将资金支付到合同约定的供应商账户"
+
+suggestion:
+  template: "付款期限应不超过10个工作日，鼓励1个工作日内完成"

@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 联合体投标
+
+id: QUAL-007
+name: 联合体投标限制
+category: qualification
+level: medium
+description: |
+  项目不接受联合体投标的限制条件，
+  需确认是否符合项目特点和法规要求。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "不接受联合体"
+    - "不允许联合体"
+    - "不接受联合体投标"
+
+verification:
+  check_type: contextual
+  # 检查是否有合理理由
+  check_patterns:
+    - "专门面向"
+    - "中小企业"
+
+reference:
+  - name: "政府采购法"
+    article: "第二十四条"
+    note: "两个以上的自然人、法人或者其他组织可以组成一个联合体"
+
+suggestion:
+  template: "如无充分理由，不应限制联合体投标"

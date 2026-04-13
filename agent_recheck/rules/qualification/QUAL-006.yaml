@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 人员资质认可
+
+id: QUAL-006
+name: 人员资质要求认可不明确
+category: qualification
+level: medium
+description: |
+  人员资质证书要求表述不明确，如"协会证书"、"相关部门颁发的证书"，
+  投标人无法确认哪些证书符合要求。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "相关部门"
+    - "相关证书"
+    - "认可"
+    - "高级"
+    - "职称"
+    - "协会"
+
+verification:
+  check_type: contextual
+  require_context:
+    - "证书"
+    - "资质"
+    - "人员"
+    - "社工"
+    - "工程师"
+
+reference:
+  - name: "政府采购法"
+    article: "第二十二条"
+    note: "不得以不合理条件限制或排斥潜在供应商"
+
+suggestion:
+  template: "明确人员资质证书的具体颁发机构和要求"

@@ -1,35 +1,38 @@
+# -*- coding: utf-8 -*-
+# 采购需求规则 - 服务内容完整性
+
 id: PROC-004
-name: 采购需求完整性检查
+name: 服务需求内容不完整
 category: procurement
-severity: medium
-description: 检查采购需求是否完整明确
+level: medium
+description: |
+  服务类采购项目中，工作内容或人员配置要求不完整，
+  如"提供相关服务"但未明确具体内容。
+enabled: true
 
-legal_basis:
-  - name: 《政府采购法实施条例》
-    article: 第十五条
-    content: "采购需求应当符合法律法规以及政府采购政策规定的技术、服务、安全等要求"
+# 触发条件
+trigger:
+  type: composite
+  match:
+    - "服务"
+    - "工作内容"
+    - "人员"
+  conditions:
+    - keyword: "服务"
+    - level_match: "(?:相关|涉及|负责).{0,10}(?:工作|内容|服务)"
 
-risk_level: medium
+verification:
+  check_type: contextual
+  # 检查是否有具体内容
+  check_patterns:
+    - "包括但不限于"
+    - "具体包括"
+    - "例如"
 
-patterns:
-  - pattern: "采购需求|技术要求|服务要求"
-    description: "检测采购需求描述"
+reference:
+  - name: "政府采购需求管理办法"
+    article: "第十一条"
+    note: "采购需求应当明确、完整"
 
-keywords:
-  - 采购需求
-  - 技术要求
-  - 服务要求
-  - 规格参数
-
-validation:
-  - type: completeness
-    required_fields:
-      - 采购标的
-      - 技术参数
-      - 数量
-      - 交付时间
-    error_message: "采购需求描述不够完整"
-
-suggestions:
-  - description: "明确采购标的、技术参数、数量和交付时间"
-    priority: medium
+suggestion:
+  template: "明确服务工作的具体内容和人员配置要求"
