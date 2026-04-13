@@ -1,0 +1,42 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 证书设置歧义
+
+id: QUAL-004
+name: 证书要求表述歧义
+category: qualification
+level: medium
+description: |
+  资质证书要求表述存在歧义，如"是否认可"、"如何得分"、"请确认"等，
+  投标人无法明确理解得分标准。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "是否认可"
+    - "如何得分"
+    - "请确认"
+    - "请核实"
+    - "是否设置"
+    - "是否要求"
+
+# 上下文验证
+verification:
+  check_type: contextual
+  # 需要在证书/资质上下文中
+  require_context:
+    - "证书"
+    - "资质"
+    - "认证"
+    - "工程师"
+    - "建造师"
+    - "监理"
+
+reference:
+  - name: "政府采购法"
+    article: "第二十二条"
+    note: "采购需求应当清楚表述"
+
+suggestion:
+  template: "将证书要求表述明确，删除歧义性词语"

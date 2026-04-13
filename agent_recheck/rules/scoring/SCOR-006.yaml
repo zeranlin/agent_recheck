@@ -1,0 +1,33 @@
+# -*- coding: utf-8 -*-
+# 评分标准规则 - 评分因素关联性
+
+id: SCORING-006
+name: 评分因素关联性不明确
+category: scoring
+level: medium
+description: |
+  评分因素之间缺乏关联性，或表述为"酌情"、"综合考虑"，
+  投标人无法明确理解评审标准。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "没有直接关联性"
+    - "请分开设置"
+    - "关联性"
+    - "酌情"
+    - "综合考虑"
+    - "由评委"
+
+verification:
+  check_type: negative
+
+reference:
+  - name: "87号令"
+    article: "第五十五条"
+    note: "评审因素应当与采购需求相关"
+
+suggestion:
+  template: "明确各评分因素的评审标准和分值"

@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+# 完整性检查规则 - 需补充内容
+
+id: COMPLETENESS-001
+name: 需补充/填写内容
+category: completeness
+level: high
+description: |
+  招标文件存在需要补充或填写的内容占位符，
+  可能导致投标人对条款理解不一致。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "请补充"
+    - "请填写"
+    - "请确认"
+    - "待填写"
+    - "待补充"
+    - "待确认"
+    - "（    ）"
+    - "（    业）"
+
+verification:
+  check_type: negative
+
+reference:
+  - name: "政府采购法"
+    article: "第二十条"
+    note: "采购需求应当完整、明确"
+
+suggestion:
+  template: "将占位符补充完整，或删除不必要的条款"

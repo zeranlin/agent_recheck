@@ -258,3 +258,38 @@ class DocxParser:
             row_data = [cell.text.strip() for cell in row.cells]
             data.append(row_data)
         return {"data": data}
+
+    def extract_comments(self, file_path: Path) -> List[str]:
+        """提取 docx 文件中的批注内容"""
+        import zipfile
+        from xml.etree import ElementTree as ET
+
+        file_path = Path(file_path)
+        if file_path.suffix.lower() not in ['.docx']:
+            return []
+
+        try:
+            with zipfile.ZipFile(file_path) as z:
+                # 检查是否有批注
+                if 'word/comments.xml' not in z.namelist():
+                    return []
+
+                with z.open('word/comments.xml') as f:
+                    tree = ET.parse(f)
+                    root = tree.getroot()
+
+                ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+                comments = []
+
+                for comment in root.iter(f'{{{ns}}}comment'):
+                    text_parts = []
+                    for t in comment.iter(f'{{{ns}}}t'):
+                        if t.text:
+                            text_parts.append(t.text)
+                    text = ''.join(text_parts).strip()
+                    if text:
+                        comments.append(text)
+
+                return comments
+        except Exception:
+            return []
