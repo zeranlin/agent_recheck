@@ -55,7 +55,7 @@ dev = [
 ]
 
 [project.scripts]
-agent_recheck = "cli.main:app"
+agent_recheck = "agent_recheck.cli.main:app"
 
 [build-system]
 requires = ["setuptools>=61.0"]

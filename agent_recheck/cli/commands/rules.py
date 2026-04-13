@@ -46,19 +46,43 @@ def _list_rules():
     table.add_column("类别", style="magenta")
     table.add_column("风险等级", justify="center")
 
+    # 类别映射
+    category_map = {
+        "DISCRIMINATION": "discrimination",
+        "SCORING": "scoring",
+        "QUALIFICATION": "qualification",
+        "PROCUREMENT": "procurement",
+        "CONTRACT": "contract",
+        "CERTIFICATION": "certification",
+        "FAIR_COMPETITION": "fair_competition",
+    }
+
     for rule in rules:
+        # 获取 severity 属性（可能是 enum 或字符串）
+        severity = rule.severity
+        if hasattr(severity, 'value'):
+            severity = severity.value
+
+        # 获取 category 属性
+        category = rule.category
+        if hasattr(category, 'value'):
+            category = category.value
+        elif hasattr(category, 'name'):
+            category = category.name
+        category = category_map.get(str(category), str(category))
+
         level_style = {
             "critical": "red",
-            "high": "orange",
+            "high": "bold red",
             "medium": "yellow",
             "low": "green",
-        }.get(rule.level, "")
+        }.get(str(severity), "")
 
         table.add_row(
             rule.id,
             rule.name,
-            rule.category,
-            f"[{level_style}]{rule.level.upper()}[/{level_style}]",
+            category,
+            f"[{level_style}]{str(severity).upper()}[/{level_style}]",
         )
 
     console.print(table)

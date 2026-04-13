@@ -185,7 +185,7 @@ def _print_summary(result: AnalysisResult):
     table.add_column("数量", justify="right")
 
     table.add_row("🔴 严重 (Critical)", "0", style="red")
-    table.add_row("🟠 高风险 (High)", str(summary.get("high", 0)), style="orange")
+    table.add_row("🟠 高风险 (High)", str(summary.get("high", 0)), style="bold red")
     table.add_row("🟡 中风险 (Medium)", str(summary.get("medium", 0)), style="yellow")
     table.add_row("🟢 低风险 (Low)", str(summary.get("low", 0)), style="green")
 
