@@ -1,16 +1,24 @@
-rule_id: "QUAL-020"
-name: "业绩证明材料要求"
-category: "qualification"
-description: "禁止要求提供采购人出具的相关证明材料，禁止要求提供合同原件核查"
-trigger:
-  type: "regex"
+id: QUAL-020
+name: 业绩证明材料要求
+category: qualification
+level: high
+
+pattern:
+  type: regex
   match:
     - "提供采购人出具.*证明"
     - "要求提供.*原件核查"
     - "合同原件.*核查"
-severity: "high"
-action:
-  type: "error"
-  message: "根据2023版易发问题清单，禁止对项目业绩要求提供合同原件核查"
-examples:
-  - "根据2023版易发问题清单，对项目业绩要求提供合同原件核查，属于歧视待遇"
+    - "采购人.*出具.*相关"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "政府采购易发问题清单（2023年版）"
+  article: ""
+  full_text: "对项目业绩要求提供合同原件核查，属于歧视待遇"
+
+suggestion:
+  template: "禁止要求提供采购人出具的相关证明材料，禁止要求合同原件核查"
+  example: "要求提供采购人出具的相关证明材料"

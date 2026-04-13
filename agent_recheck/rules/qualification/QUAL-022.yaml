@@ -1,16 +1,19 @@
-rule_id: "QUAL-022"
-name: "诚信审查条件设置"
-category: "qualification"
-description: "诚信相关问题的扣分条件应当明确期限或采用扣分制"
-trigger:
-  type: "regex"
+id: QUAL-022
+name: 诚信审查条件设置
+category: qualification
+level: medium
+
+pattern:
+  type: regex
   match:
     - "诚信.*问题.*不得分"
     - "诚信.*扣分"
-    - ".*诚信.*处理.*期限内"
-severity: "medium"
-action:
-  type: "suggest"
-  message: "诚信相关问题的扣分条件建议明确期限或采用扣分制"
-examples:
-  - "投标人在参与政府采购活动中存在诚信相关问题且在主管部门相关处理措施实施期限内的，本项不得分"
+    - "诚信相关问题"
+    - "处理措施.*期限.*不得分"
+
+verification:
+  check_type: negative
+
+suggestion:
+  template: "诚信相关问题的扣分条件建议明确期限或采用扣分制"
+  example: "投标人在参与政府采购活动中存在诚信相关问题且在主管部门相关处理措施实施期限内的，本项不得分"

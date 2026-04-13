@@ -1,16 +1,24 @@
-rule_id: "CONTRACT-006"
-name: "合同变更解除权"
-category: "contract"
-description: "政府采购合同双方当事人不得擅自变更、中止或终止合同，采购人需报财政主管部门申请"
-trigger:
-  type: "regex"
+id: CONTRACT-006
+name: 合同变更解除权
+category: contract
+level: high
+
+pattern:
+  type: regex
   match:
     - "采购人有权.*解除合同"
     - "擅自.*变更.*中止.*终止"
     - ".*合同.*解除.*财政"
-severity: "high"
-action:
-  type: "suggest"
-  message: "根据《政府采购法》第五十条，政府采购合同不得擅自变更、中止或终止合同"
-examples:
-  - "建议修改为：采购人有权视情况报财政主管部门申请解除合同"
+    - "中止或者终止合同"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "政府采购法"
+  article: "第五十条"
+  full_text: "政府采购合同的双方当事人不得擅自变更、中止或者终止合同"
+
+suggestion:
+  template: "根据《政府采购法》第五十条，政府采购合同不得擅自变更、中止或终止合同"
+  example: "建议修改为：采购人有权视情况报财政主管部门申请解除合同"

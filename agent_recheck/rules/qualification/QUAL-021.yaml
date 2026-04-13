@@ -1,16 +1,19 @@
-rule_id: "QUAL-021"
-name: "投标保证退还时限"
-category: "qualification"
-description: "未中标人的投标保证金应在中标结果公示结束后及时退还"
-trigger:
-  type: "regex"
+id: QUAL-021
+name: 投标保证退还时限
+category: qualification
+level: low
+
+pattern:
+  type: regex
   match:
     - "保证金.*退还.*工作日"
     - "中标.*公示.*退还"
     - "原.*渠道.*退付"
-severity: "low"
-action:
-  type: "suggest"
-  message: "投标保证金退还时限：中标结果公示结束后一个工作日内原渠道退付"
-examples:
-  - "未中标人的投标保证金，在中标结果公示结束后一个工作日内原渠道退付"
+    - "保证金.*原渠道"
+
+verification:
+  check_type: positive
+
+suggestion:
+  template: "投标保证金退还时限：中标结果公示结束后一个工作日内原渠道退付"
+  example: "未中标人的投标保证金，在中标结果公示结束后一个工作日内原渠道退付"

@@ -1,16 +1,24 @@
-rule_id: "PROC-008"
-name: "样品提交要求限制"
-category: "procurement"
-description: "一般不得要求投标人提供样品，仅在特殊情况下方可要求"
-trigger:
-  type: "regex"
+id: PROC-008
+name: 样品提交要求限制
+category: procurement
+level: high
+
+pattern:
+  type: regex
   match:
     - "要求投标人提供样品"
     - "提供样品.*评审"
     - "样品.*判断.*需求"
-severity: "high"
-action:
-  type: "suggest"
-  message: "根据《财政部令第87号》第二十二条，一般不得要求投标人提供样品"
-examples:
-  - "根据《财政部令第87号》第二十二条，采购人、采购代理机构一般不得要求投标人提供样品"
+    - "样品.*评审"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "财政部令第87号"
+  article: "第二十二条"
+  full_text: "采购人、采购代理机构一般不得要求投标人提供样品"
+
+suggestion:
+  template: "根据《财政部令第87号》第二十二条，一般不得要求投标人提供样品"
+  example: "要求投标人提供样品"

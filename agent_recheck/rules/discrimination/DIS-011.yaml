@@ -11,8 +11,8 @@ description: |
 enabled: true
 
 # 触发条件
-trigger:
-  type: keyword
+pattern:
+  type: regex
   match:
     - "行政机关或事业单位颁发"
     - "政府部门颁发"

@@ -1,17 +1,19 @@
-rule_id: "PROC-009"
-name: "评定分离适用范围"
-category: "procurement"
-description: "评定分离仅适用于重大项目（1000万以上）和特定品目项目（家具和用具等）"
-trigger:
-  type: "regex"
+id: PROC-009
+name: 评定分离适用范围
+category: procurement
+level: low
+
+pattern:
+  type: regex
   match:
     - "评定分离.*适用范围"
     - "重大项目.*评定分离"
     - "特定品目.*评定分离"
-severity: "low"
-action:
-  type: "info"
-  message: "评定分离适用范围：重大项目（1000万以上）或家具、用具等特定品目"
-examples:
-  - "鼓励采购人在执行重大项目和特定品目项目政府采购时选择适用评定分离"
-  - "重大项目是指单个项目预算金额一千万元（含）以上的项目"
+    - "评定分离.*一千万元"
+
+verification:
+  check_type: positive
+
+suggestion:
+  template: "评定分离适用范围：重大项目（1000万以上）或特定品目（家具、用具等）"
+  example: "鼓励采购人在执行重大项目和特定品目项目政府采购时选择适用评定分离"

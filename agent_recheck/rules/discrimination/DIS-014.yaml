@@ -1,17 +1,18 @@
-rule_id: "DIS-014"
-name: "行业协会证书歧视"
-category: "discrimination"
-description: "禁止要求证书由特定行业协会等非权威机构颁发，行业协会证书缺乏权威性"
-trigger:
-  type: "regex"
+id: DIS-014
+name: 行业协会证书歧视
+category: discrimination
+level: high
+
+pattern:
+  type: regex
   match:
     - "行业协会.*颁发"
     - "行业协会.*证书"
-    - ".*证书.*行业协会"
-severity: "medium"
-action:
-  type: "warn"
-  message: "行业协会证书缺乏权威性，建议删除此类证书要求"
-examples:
-  - "删除行业协会"
-  - "行业协会证书很没权威性"
+    - "证书.*行业协会"
+
+verification:
+  check_type: negative
+
+suggestion:
+  template: "行业协会证书缺乏权威性，建议删除此类证书要求"
+  example: "删除行业协会"

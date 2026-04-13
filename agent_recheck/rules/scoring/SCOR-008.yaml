@@ -1,16 +1,24 @@
-rule_id: "SCOR-008"
-name: "证书认证范围限制"
-category: "scoring"
-description: "ISO证书不得限制认证范围与经营范围匹配，不得将特定经营范围作为投标条件"
-trigger:
-  type: "regex"
+id: SCOR-008
+name: 证书认证范围限制
+category: scoring
+level: high
+
+pattern:
+  type: regex
   match:
     - "认证范围.*经营范围"
     - "ISO.*认证范围"
     - "经营范围.*投标.*条件"
-severity: "high"
-action:
-  type: "error"
-  message: "根据发改办法规〔2020〕727号，不得将投标人营业执照记载的经营范围作为投标、加分或中标条件"
-examples:
-  - "不得将投标人营业执照记载的经营范围采用某种特定表述或者明确记载某个特定经营范围细项作为投标、加分或者中标条件"
+    - "营业执照记载的经营范围"
+
+verification:
+  check_type: negative
+
+reference:
+  law: "发改办法规〔2020〕727号"
+  article: ""
+  full_text: "不得将投标人营业执照记载的经营范围作为投标、加分或中标条件"
+
+suggestion:
+  template: "根据发改办法规〔2020〕727号，不得将特定经营范围作为投标条件"
+  example: "不得将投标人营业执照记载的经营范围采用某种特定表述作为投标、加分或者中标条件"
