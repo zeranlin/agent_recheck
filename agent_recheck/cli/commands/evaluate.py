@@ -6,8 +6,8 @@ from typing import Optional
 import typer
 from rich.console import Console
 
-from evaluator.accuracy_evaluator import AccuracyEvaluator
-from ..utils.logging import get_logger
+from agent_recheck.evaluator.accuracy_evaluator import AccuracyEvaluator
+from agent_recheck.utils.logging import get_logger
 
 logger = get_logger("cli.evaluate")
 console = Console()

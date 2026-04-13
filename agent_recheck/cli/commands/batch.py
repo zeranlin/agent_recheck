@@ -10,11 +10,11 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 
-from analyzer.engine.hybrid_engine import HybridAnalysisEngine
-from analyzer.parser.base import ParserFactory
-from ...models.report import AnalysisReport
-from report.json_reporter import JsonReporter
-from ..utils.logging import get_logger
+from agent_recheck.analyzer.engine.hybrid_engine import HybridAnalysisEngine
+from agent_recheck.analyzer.parser.base import ParserFactory
+from agent_recheck.models.report import AnalysisReport
+from agent_recheck.report.json_reporter import JsonReporter
+from agent_recheck.utils.logging import get_logger
 
 logger = get_logger("cli.batch")
 console = Console()

@@ -41,7 +41,7 @@ def analyze(
     threshold: float = typer.Option(0.7, "--threshold", help="LLM 置信度阈值"),
 ):
     """分析单个投标文件"""
-    from cli.commands.analyze import analyze_command
+    from agent_recheck.cli.commands.analyze import analyze_command
 
     analyze_command(
         file=file,
@@ -79,7 +79,7 @@ def rules(
     file: Optional[Path] = typer.Option(None, "--file", "-f", help="规则文件路径"),
 ):
     """规则管理"""
-    from cli.commands.rules import rules_command
+    from agent_recheck.cli.commands.rules import rules_command
 
     rules_command(action=action, file=file)
 
@@ -111,7 +111,7 @@ def stats(
     metric: Optional[str] = typer.Option(None, "--metrics", help="指定指标"),
 ):
     """查看监控统计"""
-    from cli.commands.stats import stats_command
+    from agent_recheck.cli.commands.stats import stats_command
 
     stats_command(metric=metric)
 

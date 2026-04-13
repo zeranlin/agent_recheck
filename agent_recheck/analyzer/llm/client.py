@@ -22,7 +22,7 @@ class LLMClient:
         self.model = self.config.get("model", "qwen3.5-27b")
         self.api_base = self.config.get("api_base", "http://112.111.54.86:10011/v1")
         self.api_key = self.config.get("api_key", "1212")
-        self.timeout = self.config.get("timeout", 60)
+        self.timeout = self.config.get("timeout", 300)  # 增加超时到 5 分钟
         self.max_retries = self.config.get("max_retries", 3)
 
         # 延迟初始化 client
@@ -132,7 +132,8 @@ class LLMClient:
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.3,
-                max_tokens=4000,
+                max_tokens=8000,  # 增加 max_tokens 避免截断
+                extra_body={"reasoning_depth": 0},  # 禁用思考模式
             )
 
             message = response.choices[0].message

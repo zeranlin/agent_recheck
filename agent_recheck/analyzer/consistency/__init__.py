@@ -136,10 +136,10 @@ class ConsistencyChecker:
         """检查资质要求前后一致"""
         qualifications = []
         for section in self.document.sections:
-            # 优先使用 section.content，如果为空则用 document.full_text
+            # 只处理有内容的章节
             text = section.content if hasattr(section, 'content') else ""
-            if not text:
-                text = getattr(self.document, 'full_text', '')[:5000]  # 限制长度
+            if not text or len(text) < 50:
+                continue
             
             if any(kw in text for kw in ["资质", "要求", "具备", "持有"]):
                 qualifications.append({
@@ -444,18 +444,11 @@ class ConsistencyChecker:
             # 构建一致性检查提示词
             prompt = self._build_consistency_prompt()
             
-            response = await client.client.chat.completions.create(
-                model=client.model,
-                messages=[
-                    {"role": "system", "content": "你是一个专业的政府采购招投标文件合规审查专家，专注于发现文档内部的一致性问题。"},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.3,
-                max_tokens=3000,
-            )
+            # 使用 _call_with_retry 获取解析后的 JSON 结果
+            result_text = await client._call_with_retry(prompt)
             
-            result_text = response.choices[0].message.content
-            self._parse_llm_consistency_result(result_text)
+            if result_text:
+                self._parse_llm_consistency_result(result_text)
             
         except Exception as e:
             logger.warning("llm_consistency_check_failed", error=str(e))
@@ -466,20 +459,23 @@ class ConsistencyChecker:
         sections_text = []
         for section in self.document.sections[:20]:  # 限制数量
             section_content = section.content if hasattr(section, 'content') else getattr(section, 'text', '')
+            if not section_content:
+                continue
             section_title = section.title if hasattr(section, 'title') else ''
             sections_text.append(f"【{section_title}】\n{section_content[:500]}")
         
         tables_text = []
         for i, table in enumerate(self.document.tables[:10]):
             if isinstance(table, dict):
-                table_title = table.get('title', '')
-                table_content = table.get('content', '')
+                table_title = table.get('title', '') or ''
+                table_content = table.get('content', '') or ''
             else:
                 table_title = getattr(table, 'title', '') or ''
                 table_content = getattr(table, 'content', '') or ''
-            tables_text.append(f"【表格{i+1}】{table_title}\n{table_content[:300]}")
+            if table_content:
+                tables_text.append(f"【表格{i+1}】{table_title}\n{table_content[:300]}")
         
-        prompt = f"""请分析以下招投标文件，找出可能存在的一致性问题：
+        prompt = f"""请分析以下招投标文件，找出可能存在的一致性问题。请直接输出JSON格式结果，不要输出任何思考过程。
 
 ## 文档段落：
 {chr(10).join(sections_text)}
@@ -494,7 +490,7 @@ class ConsistencyChecker:
 4. 金额数字不一致（如大写金额与小写金额不符）
 5. 表格与文字描述矛盾（如说"见下表"但表格不存在）
 
-请以JSON格式返回发现的问题，格式如下：
+直接输出JSON格式：
 {{
   "issues": [
     {{
@@ -516,25 +512,73 @@ class ConsistencyChecker:
         import json
         import re
         
+        if not result_text:
+            logger.warning("llm_consistency_empty_response")
+            return
+        
         try:
-            # 尝试提取 JSON
-            json_match = re.search(r'\{[\s\S]*\}|\[[\s\S]*\]', result_text)
-            if not json_match:
-                logger.warning("llm_consistency_response_not_json")
-                return
+            # 对于 qwen3 的 reasoning 格式，需要提取最后的 JSON 部分
+            # 通常 JSON 在 ```json ... ``` 代码块中，或在文档末尾
             
-            data = json.loads(json_match.group())
-            issues_list = data.get("issues", [])
+            # 方法1: 尝试提取 ```json 或 ``` 代码块中的内容
+            json_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', result_text)
+            if json_block_match:
+                json_text = json_block_match.group(1).strip()
+            else:
+                # 方法2: 对于思考过程格式，尝试提取最后的JSON部分
+                # 通常在 "Final Answer:", "结论:", "JSON Output:" 等标记后
+                final_match = re.search(r'(?:Final Answer|结论|JSON Output|最终输出)[\s:]*([\s\S]*)$', result_text)
+                if final_match:
+                    json_text = final_match.group(1).strip()
+                    # 尝试从结果中提取JSON
+                    json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', json_text)
+                    if json_match:
+                        json_text = json_match.group(1)
+                    else:
+                        json_text = json_text[:2000]  # 取最后2000字符作为JSON尝试
+                else:
+                    # 方法3: 直接搜索 JSON 对象或数组
+                    json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', result_text)
+                    if json_match:
+                        json_text = json_match.group(1)
+                    else:
+                        # 方法4: 尝试将思考过程后的大部分内容作为JSON解析
+                        # 寻找可能的JSON开始位置
+                        json_start = result_text.rfind('{')
+                        if json_start > len(result_text) // 2:  # JSON在文本后半部分
+                            json_text = result_text[json_start:]
+                        else:
+                            logger.warning("llm_consistency_response_not_json", preview=result_text[:200])
+                            return
+            
+            data = json.loads(json_text)
+            
+            # 兼容多种 JSON 格式
+            # 格式1: {"issues": [...]} - 标准格式
+            # 格式2: {"analysis_result": [...]} - qwen 返回格式
+            # 格式3: {"consistency_issues": [...]} - qwen 一致性检查格式
+            # 格式4: 直接是数组 [...]
+            if isinstance(data, dict):
+                issues_list = data.get("issues", data.get("analysis_result", data.get("consistency_issues", [])))
+            elif isinstance(data, list):
+                issues_list = data
+            else:
+                issues_list = []
             
             for item in issues_list:
                 try:
-                    check_type_str = item.get("type", "llm_analysis")
+                    # 兼容不同字段名
+                    check_type_str = item.get("type", item.get("issue_type", "llm_analysis"))
                     try:
                         check_type = ConsistencyType(check_type_str)
                     except ValueError:
                         check_type = ConsistencyType.LLM_ANALYSIS
                     
-                    severity_str = item.get("severity", "warning")
+                    # 兼容 severity/risk_level 字段
+                    severity_str = item.get("severity", item.get("risk_level", "warning"))
+                    severity_map = {"高": "error", "中": "warning", "低": "info", 
+                                   "high": "error", "medium": "warning", "low": "info"}
+                    severity_str = severity_map.get(severity_str, severity_str)
                     try:
                         severity = Severity(severity_str)
                     except ValueError:
@@ -543,10 +587,10 @@ class ConsistencyChecker:
                     issue = ConsistencyIssue(
                         check_type=check_type,
                         severity=severity,
-                        title=item.get("title", "一致性问题"),
-                        description=item.get("description", ""),
-                        location=item.get("location", {}),
-                        evidence=item.get("evidence", []),
+                        title=item.get("title", item.get("description", "一致性问题")),
+                        description=item.get("description", item.get("reason", "")),
+                        location={"section": item.get("segment", "")},
+                        evidence=[item.get("reason", ""), item.get("description", "")],
                         suggestion=item.get("suggestion", ""),
                         source="llm",
                     )
@@ -554,5 +598,5 @@ class ConsistencyChecker:
                 except Exception as e:
                     logger.warning("llm_issue_parse_error", error=str(e))
                     
-        except json.JSONDecodeError:
-            logger.warning("llm_consistency_json_decode_error")
+        except json.JSONDecodeError as e:
+            logger.warning("llm_consistency_json_decode_error", error=str(e))

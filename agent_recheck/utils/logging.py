@@ -1,6 +1,7 @@
 """日志配置"""
 
 import sys
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -10,7 +11,7 @@ import structlog
 def setup_logging(
     level: str = "INFO",
     log_file: Optional[Path] = None,
-    json_format: bool = True,
+    json_format: bool = False,
 ) -> structlog.BoundLogger:
     """
     配置日志系统
@@ -20,10 +21,17 @@ def setup_logging(
         log_file: 日志文件路径
         json_format: 是否使用 JSON 格式
     """
+    # 配置标准库logging
+    logging.basicConfig(
+        format="%(message)s",
+        stream=sys.stdout,
+        level=getattr(logging, level.upper(), logging.INFO),
+    )
+
+    # 简化processors，移除可能出问题的processor
     processors = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
-        structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
@@ -38,12 +46,11 @@ def setup_logging(
         processors=processors,
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
+        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 
     logger = structlog.get_logger("agent_recheck")
-    logger.setLevel(level.upper())
 
     return logger
 

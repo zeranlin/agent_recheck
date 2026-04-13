@@ -1,42 +1,105 @@
 {
   "case_id": "SAMPLE-001",
-  "document_name": "某单位办公设备采购招标文件.docx",
-  "document_path": "./tests/fixtures/sample_tender.docx",
+  "document_name": "test_bid.docx",
+  "document_path": "./tests/fixtures/test_bid.docx",
   "expected_issues": [
     {
-      "issue_id": "SAMPLE-001_100_150",
-      "text": "本项目仅限深圳市本地企业参与投标",
-      "start_pos": 100,
-      "end_pos": 150,
+      "issue_id": "SAMPLE-001_001",
+      "text": "具有深圳市本地业绩（近3年内完成）",
+      "start_pos": 0,
+      "end_pos": 50,
       "category": "discrimination",
       "severity": "high",
       "is_true_positive": true,
-      "notes": "地域歧视条款"
+      "notes": "地域业绩限制，排斥外地供应商"
     },
     {
-      "issue_id": "SAMPLE-001_500_550",
-      "text": "供应商须具有ISO9001认证",
-      "start_pos": 500,
-      "end_pos": 550,
+      "issue_id": "SAMPLE-001_002",
+      "text": "注册资本不低于1000万元",
+      "start_pos": 0,
+      "end_pos": 50,
+      "category": "qualification",
+      "severity": "high",
+      "is_true_positive": true,
+      "notes": "注册资本门槛过高，排斥中小企业"
+    },
+    {
+      "issue_id": "SAMPLE-001_003",
+      "text": "需具备ISO9001认证",
+      "start_pos": 0,
+      "end_pos": 50,
       "category": "certification",
       "severity": "medium",
       "is_true_positive": true,
-      "notes": "认证要求合理"
+      "notes": "认证要求需根据项目实际需要设定"
     },
     {
-      "issue_id": "SAMPLE-001_800_850",
-      "text": "价格分权重占60%",
-      "start_pos": 800,
-      "end_pos": 850,
-      "category": "scoring",
+      "issue_id": "SAMPLE-001_004",
+      "text": "违约金按每日3‰计算",
+      "start_pos": 0,
+      "end_pos": 50,
+      "category": "contract",
+      "severity": "high",
+      "is_true_positive": true,
+      "notes": "违约金比例过高，折合年化超过100%"
+    },
+    {
+      "issue_id": "SAMPLE-001_005",
+      "text": "预付款为合同金额的50%",
+      "start_pos": 0,
+      "end_pos": 50,
+      "category": "contract",
       "severity": "medium",
       "is_true_positive": true,
-      "notes": "价格分权重偏高"
+      "notes": "预付款比例偏高，建议不超过30%"
+    },
+    {
+      "issue_id": "SAMPLE-001_006",
+      "text": "履约保证金为合同金额的15%",
+      "start_pos": 0,
+      "end_pos": 50,
+      "category": "contract",
+      "severity": "high",
+      "is_true_positive": true,
+      "notes": "超过法规规定的10%上限"
+    },
+    {
+      "issue_id": "SAMPLE-001_007",
+      "text": "评标办法仅注明综合评分法，未规定中小企业价格扣除比例",
+      "start_pos": 0,
+      "end_pos": 100,
+      "category": "sme",
+      "severity": "medium",
+      "is_true_positive": true,
+      "notes": "未落实中小企业扶持政策"
+    },
+    {
+      "issue_id": "SAMPLE-001_008",
+      "text": "文件全文未提供采购机构联系方式",
+      "start_pos": 0,
+      "end_pos": 50,
+      "category": "logic",
+      "severity": "low",
+      "is_true_positive": true,
+      "notes": "缺失必要联系信息"
     }
   ],
   "metadata": {
-    "total_annotations": 3,
-    "created_by": "system",
-    "created_at": "2026-04-12T00:00:00"
+    "total_annotations": 8,
+    "created_by": "cte_enhanced",
+    "created_at": "2026-04-13T09:26:00",
+    "categories": [
+      "discrimination",
+      "qualification",
+      "certification",
+      "contract",
+      "sme",
+      "logic"
+    ],
+    "severity_summary": {
+      "high": 4,
+      "medium": 3,
+      "low": 1
+    }
   }
 }

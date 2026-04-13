@@ -68,11 +68,17 @@ class AnalysisResult:
     
     def summary(self) -> Dict[str, Any]:
         """生成摘要"""
+        def get_level_value(level):
+            """安全获取level值（枚举或字符串）"""
+            if hasattr(level, 'value'):
+                return level.value
+            return str(level) if level else "medium"
+        
         return {
             "total": len(self.issues),
-            "high": sum(1 for i in self.issues if i.level == "high"),
-            "medium": sum(1 for i in self.issues if i.level == "medium"),
-            "low": sum(1 for i in self.issues if i.level == "low"),
+            "high": sum(1 for i in self.issues if get_level_value(i.level) == "high"),
+            "medium": sum(1 for i in self.issues if get_level_value(i.level) == "medium"),
+            "low": sum(1 for i in self.issues if get_level_value(i.level) == "low"),
             "by_source": self.issues_by_source,
         }
 
@@ -198,7 +204,7 @@ class HybridAnalysisEngine:
                 issues_by_source.update(source_stats)
                 
             elif mode == AnalysisMode.LLM_ONLY.value or mode == "llm_only":
-                issues, source_stats = asyncio.run(self._analyze_llm_only(document))
+                issues, source_stats = self._run_async(self._analyze_llm_only(document))
                 issues_by_source.update(source_stats)
                 
             elif mode == AnalysisMode.FALLBACK.value or mode == "fallback":
@@ -206,7 +212,7 @@ class HybridAnalysisEngine:
                 issues_by_source["fallback"] = len(issues)
                 
             else:  # hybrid
-                issues, source_stats = asyncio.run(self._analyze_hybrid(document))
+                issues, source_stats = self._run_async(self._analyze_hybrid(document))
                 issues_by_source.update(source_stats)
         
         except Exception as e:
@@ -239,6 +245,21 @@ class HybridAnalysisEngine:
             issues_by_source=issues_by_source,
             warnings=warnings,
         )
+
+    def _run_async(self, coro):
+        """在同步方法中运行异步协程"""
+        try:
+            loop = asyncio.get_running_loop()
+            # 如果已经有运行的loop，创建一个新的task并在当前loop中运行
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                def run_in_thread():
+                    return asyncio.run(coro)
+                future = pool.submit(run_in_thread)
+                return future.result()
+        except RuntimeError:
+            # 没有运行的loop
+            return asyncio.run(coro)
     
     def _analyze_rules_only(self, document: Document) -> tuple[List[Issue], Dict[str, int]]:
         """纯规则分析"""
@@ -325,7 +346,7 @@ class HybridAnalysisEngine:
     def _match_rule(self, rule, document: Document) -> List[Issue]:
         """匹配规则"""
         import re
-        from models.issue import IssueEvidence, IssueLocation, IssueSuggestion, IssueRule, IssueLevel
+        from agent_recheck.models.issue import IssueEvidence, IssueLocation, IssueSuggestion, IssueRule, IssueLevel
         
         issues = []
         
