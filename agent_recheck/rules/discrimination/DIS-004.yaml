@@ -12,22 +12,27 @@ enabled: true
 
 # 触发条件：检测到可能歧视中小企业的条款
 trigger:
-  type: composite
-  conditions:
-    - type: keyword
-      match:
-        - "注册资本"
-        - "成立年限"
-        - "员工人数"
-        - "营业额"
-      severity: medium
-    
-    - type: keyword
-      match:
-        - "大型企业"
-        - "国有企业"
-        - "上市公司"
-      severity: high
+  type: keyword
+  match:
+    - "注册资本"
+    - "成立年限"
+    - "员工人数"
+    - "营业额"
+    - "大型企业"
+    - "国有企业"
+    - "上市公司"
+
+# pattern: 用于正则匹配
+pattern:
+  type: regex
+  match:
+    - "注册资本"
+    - "成立年限"
+    - "员工人数"
+    - "营业额"
+    - "大型企业"
+    - "国有企业"
+    - "上市公司"
 
 # 验证规则
 verification:

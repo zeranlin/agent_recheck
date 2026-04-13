@@ -12,24 +12,31 @@ enabled: true
 
 # 触发条件
 trigger:
-  type: composite
-  conditions:
-    - type: keyword
-      match:
-        - "业绩"
-        - "类似项目"
-        - "成功案例"
-      severity: high
-    
-    - type: keyword
-      match:
-        - "本省"
-        - "本市区"
-        - "本区"
-        - "本市"
-        - "深圳市"
-        - "广东省"
-      severity: critical
+  type: keyword
+  match:
+    - "业绩"
+    - "类似项目"
+    - "成功案例"
+    - "本省"
+    - "本市区"
+    - "本区"
+    - "本市"
+    - "深圳市"
+    - "广东省"
+
+# pattern: 用于正则匹配
+pattern:
+  type: regex
+  match:
+    - "业绩"
+    - "类似项目"
+    - "成功案例"
+    - "本省"
+    - "本市区"
+    - "本区"
+    - "本市"
+    - "深圳市"
+    - "广东省"
 
 # 上下文验证
 verification:

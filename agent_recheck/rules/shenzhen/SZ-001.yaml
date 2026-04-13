@@ -16,13 +16,19 @@ applicable_regions:
 
 # 触发条件
 trigger:
-  type: composite
-  conditions:
-    - type: keyword
-      match:
-        - "预留"
-        - "中小企业"
-        - "小微企业"
+  type: keyword
+  match:
+    - "预留"
+    - "中小企业"
+    - "小微企业"
+
+# pattern: 用于正则匹配
+pattern:
+  type: regex
+  match:
+    - "预留"
+    - "中小企业"
+    - "小微企业"
 
 # 验证规则
 verification:
