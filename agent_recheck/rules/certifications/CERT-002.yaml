@@ -18,6 +18,14 @@ trigger:
     - "质量管理体系"
     - "质量管理体系认证"
 
+# pattern: 用于正则匹配
+pattern:
+  type: regex
+  match:
+    - "ISO9001"
+    - "质量管理体系"
+    - "质量管理体系认证"
+
 # 验证规则
 verification:
   check_type: contextual

@@ -19,6 +19,14 @@ trigger:
     - "售后服务体系认证"
     - "GB/T27922"
 
+# pattern: 用于正则匹配
+pattern:
+  type: regex
+  match:
+    - "售后服务认证"
+    - "售后服务体系认证"
+    - "GB/T27922"
+
 verification:
   check_type: contextual
   require_context:

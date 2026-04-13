@@ -18,6 +18,14 @@ trigger:
     - "社会责任认证"
     - "社会责任管理体系"
 
+# pattern: 用于正则匹配
+pattern:
+  type: regex
+  match:
+    - "SA8000"
+    - "社会责任认证"
+    - "社会责任管理体系"
+
 # 上下文验证
 verification:
   check_type: negative
