@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 证书类型违规
+
+id: QUAL-009
+name: 证书要求未依法设定
+category: qualification
+level: critical
+description: |
+  某些证书被财政部门明确列为不得设置的评审因素，
+  如特定培训证书、工业设计证书等。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "工业设计"
+    - "售后服务认证"
+    - "GB/T27922"
+
+verification:
+  check_type: contextual
+  require_context:
+    - "证书"
+    - "评审"
+    - "得分"
+
+reference:
+  - name: "深圳市财政局"
+    article: "采购管理相关规定"
+    note: "未依法设定的评审因素应删除"
+
+suggestion:
+  template: "删除财政局明确禁止设置的证书评审因素"

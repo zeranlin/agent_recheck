@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+# 评分标准规则 - 分值占位符
+
+id: SCORING-007
+name: 评分分值未填写
+category: scoring
+level: high
+description: |
+  评分标准中分值使用"XX"等占位符，
+  投标人无法明确理解分值分配。
+enabled: true
+
+# 触发条件
+trigger:
+  type: regex
+  match:
+    - "XX分"
+    - "XX[分%]"
+    - "\\d+分$"
+    - "[（(][×xX*][）)]分"
+
+verification:
+  check_type: negative
+  # 检查是否为占位符
+  invalid_patterns:
+    - "XX分"
+    - "XX分)"
+    - "(XX分"
+
+reference:
+  - name: "87号令"
+    article: "第五十五条"
+    note: "评审因素应当细化和量化"
+
+suggestion:
+  template: "填写具体的分值"

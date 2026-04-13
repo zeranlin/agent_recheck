@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 公章类型歧义
+
+id: QUAL-010
+name: 公章类型要求歧义
+category: qualification
+level: medium
+description: |
+  证明材料要求中的公章类型表述不明确，
+  如"制造商公章"还是"投标人公章"，导致投标人无法确认。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "公章"
+    - "专用章"
+    - "投标专用章"
+
+verification:
+  check_type: contextual
+  # 检查是否明确
+  ambiguous_patterns:
+    - "制造商"
+    - "投标人"
+
+reference:
+  - name: "政府采购法"
+    article: "第二十二条"
+    note: "采购需求应当清楚、明确"
+
+suggestion:
+  template: "明确公章类型要求"

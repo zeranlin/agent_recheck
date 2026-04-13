@@ -1,0 +1,36 @@
+# -*- coding: utf-8 -*-
+# 资质要求规则 - 禁止设置的证书
+
+id: QUAL-008
+name: 禁止设置的证书类型
+category: qualification
+level: critical
+description: |
+  某些证书被财政部门明确列为不得设置的评审因素，
+  如特定认证、培训证书等。
+enabled: true
+
+# 触发条件
+trigger:
+  type: keyword
+  match:
+    - "财政部门"
+    - "不得设置"
+    - "禁止设置"
+
+verification:
+  check_type: contextual
+  # 检查证书相关上下文
+  require_context:
+    - "证书"
+    - "资质"
+    - "认证"
+    - "培训"
+
+reference:
+  - name: "政府采购法"
+    article: "实施条例"
+    note: "采购人不得以不合理条件限制或排斥潜在供应商"
+
+suggestion:
+  template: "删除财政部门明确禁止设置的证书要求"
