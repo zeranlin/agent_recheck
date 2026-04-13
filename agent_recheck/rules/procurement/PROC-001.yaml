@@ -1,58 +1,36 @@
 # -*- coding: utf-8 -*-
-# 采购需求规则 - 技术参数指向性
+# 采购需求规则 - 允许偏差未填写
 
 id: PROC-001
-name: 技术参数不得指向特定品牌或产品
-category: procurement_requirement
-level: high
+name: 允许偏差未填写
+category: procurement
+level: medium
 description: |
-  技术需求中的规格参数不得指向特定品牌、特定产品，
-  不得通过参数设置排除其他潜在供应商。
+  采购需求中"允许偏差"参数未填写具体值，
+  投标人无法明确理解技术要求。
 enabled: true
 
 # 触发条件
 trigger:
-  type: composite
-  conditions:
-    - type: keyword
-      match:
-        - "技术参数"
-        - "规格"
-        - "型号"
-        - "配置"
-      severity: medium
-    
-    - type: pattern
-      match:
-        - "品牌型号"
-        - "等同于"
-        - "参照"
-        - "必须是"
-      severity: critical
+  type: regex
+  match:
+    - "允许偏差[\\u4e00-\\u9fff]*[±＋-][\\u4e00-\\u9fff]*[°″']?"
+    - "允许偏差[：:]\\s*[×xX*]?[\\u4e00-\\u9fff]*$"
+    - "[±＋-][0-9]+%[\\u4e00-\\u9fff]*$"
+    - "允许偏差\\s*[（(][×xX*]?[）)]"
 
-# 上下文验证
 verification:
-  check_type: contextual
-  
-  # 检查是否为具体品牌
-  check_items:
-    - type: brand_name
-      severity: critical
-    - type: specific_model
-      severity: critical
-    - type: proprietary_feature
-      severity: high
+  check_type: negative
+  # 检查是否为空或占位符
+  invalid_patterns:
+    - "允许偏差±"
+    - "允许偏差×"
+    - "允许偏差（）"
 
-# 关联法规
 reference:
   - name: "政府采购法"
-    article: "第三十六条"
-  - name: "政府采购货物和服务招标投标管理办法"
-    article: "第十一条"
+    article: "第二十条"
+    note: "采购需求应当完整、明确"
 
-# 建议模板
 suggestion:
-  template: "将技术参数修改为性能指标或功能要求，避免指向特定品牌"
-  examples:
-    - "修改为'具有XX功能的设备'"
-    - "修改为'XX性能指标达到XX级别'"
+  template: "填写允许偏差的具体数值"

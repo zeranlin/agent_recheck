@@ -1,28 +1,33 @@
-id: CERT-001
-name: SA8000认证不得作为资格条件
-category: 认证证书
-level: high
+# -*- coding: utf-8 -*-
+# 认证证书规则 - 售后服务认证
 
-pattern:
+id: CERT-001
+name: 售后服务认证构成歧视性要求
+category: certifications
+level: high
+description: |
+  售后服务认证（GB/T27922）属于商业性认证，
+  该认证对企业规模和分支机构有硬性要求，
+  变相将供应商规模条件作为加分条件，构成对中小企业的歧视性要求。
+enabled: true
+
+# 触发条件
+trigger:
   type: keyword
   match:
-    - "SA8000"
-    - "社会责任认证"
-  exclude_context:
-    - "优先"
-    - "加分项"
+    - "售后服务认证"
+    - "售后服务体系认证"
+    - "GB/T27922"
 
 verification:
-  check_type: negative
-  scope:
-    - 资格条件
-    - 实质性条款
+  check_type: contextual
+  require_context:
+    - "认证"
 
 reference:
-  law: "政府采购法实施条例"
-  article: "第二十条"
-  full_text: "不得以不合理的条件对供应商实行差别待遇或者歧视待遇"
+  - name: "政府采购促进中小企业发展管理办法"
+    article: "第三条"
+    note: "不得变相将供应商规模条件作为评审因素"
 
 suggestion:
-  template: "删除{证书名称}作为资格条件要求，如确需可作为评分加分项"
-  example: "删除SA8000认证作为投标资格条件"
+  template: "删除售后服务认证要求，或改为对中小企业无歧视性的要求"

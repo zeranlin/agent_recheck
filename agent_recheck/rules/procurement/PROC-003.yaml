@@ -1,30 +1,37 @@
+# -*- coding: utf-8 -*-
+# 采购需求规则 - 实质性条款标记
+
 id: PROC-003
-name: 进口产品限制条款
+name: 实质性条款标记不一致
 category: procurement
-severity: high
-description: 检查是否不合理限制进口产品
+level: medium
+description: |
+  实质性条款（★或▲标记）的表述前后不一致，
+  或标记含义不明确。
+enabled: true
 
-legal_basis:
-  - name: 《政府采购法》
-    article: 第十条
-    content: "政府采购应当采购本国货物、工程和服务"
+# 触发条件
+trigger:
+  type: composite
+  match:
+    - "★"
+    - "实质性"
+  conditions:
+    - keyword: "★"
 
-risk_level: high
+verification:
+  check_type: contextual
+  # 检查多个★标记是否存在不同表述
+  check_patterns:
+    - "不可负偏离"
+    - "不可偏离"
+    - "负偏离"
+    - "投标无效"
 
-patterns:
-  - pattern: "仅限|只能|必须是.*进口"
-    description: "检测进口产品强制要求"
+reference:
+  - name: "87号令"
+    article: "第五十条"
+    note: "招标文件应当明确规定是否允许偏离及允许偏离的范围和幅度"
 
-keywords:
-  - 进口产品
-  - 进口设备
-  - 原装进口
-  - 进口品牌
-
-validation:
-  - type: exclusion
-    error_message: "不得将进口产品作为唯一选择"
-
-suggestions:
-  - description: "允许国产和进口产品参与竞争"
-    priority: high
+suggestion:
+  template: "统一实质性条款的标记和表述"
